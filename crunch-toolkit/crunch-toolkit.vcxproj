@@ -151,6 +151,18 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\slippc\analysis.h" />
+    <ClInclude Include="..\slippc\analyzer.h" />
+    <ClInclude Include="..\slippc\compressor.h" />
+    <ClInclude Include="..\slippc\enums.h" />
+    <ClInclude Include="..\slippc\gecko-legacy.h" />
+    <ClInclude Include="..\slippc\lzma.h" />
+    <ClInclude Include="..\slippc\parser.h" />
+    <ClInclude Include="..\slippc\portable-file-dialogs.h" />
+    <ClInclude Include="..\slippc\replay.h" />
+    <ClInclude Include="..\slippc\schema.h" />
+    <ClInclude Include="..\slippc\shiftjis.h" />
+    <ClInclude Include="..\slippc\util.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>

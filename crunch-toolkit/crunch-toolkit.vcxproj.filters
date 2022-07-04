@@ -13,10 +13,49 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Header Files\slippc">
+      <UniqueIdentifier>{28af7c3d-b975-4ca3-ba7f-ba49ac141bb1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\slippc\analysis.h">
+      <Filter>Header Files\slippc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\slippc\analyzer.h">
+      <Filter>Header Files\slippc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\slippc\compressor.h">
+      <Filter>Header Files\slippc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\slippc\enums.h">
+      <Filter>Header Files\slippc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\slippc\gecko-legacy.h">
+      <Filter>Header Files\slippc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\slippc\lzma.h">
+      <Filter>Header Files\slippc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\slippc\parser.h">
+      <Filter>Header Files\slippc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\slippc\portable-file-dialogs.h">
+      <Filter>Header Files\slippc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\slippc\replay.h">
+      <Filter>Header Files\slippc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\slippc\schema.h">
+      <Filter>Header Files\slippc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\slippc\shiftjis.h">
+      <Filter>Header Files\slippc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\slippc\util.h">
+      <Filter>Header Files\slippc</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
