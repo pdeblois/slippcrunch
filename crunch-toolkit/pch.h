@@ -8,6 +8,17 @@
 #define PCH_H
 
 // add headers that you want to pre-compile here
-#include "framework.h"
+#include "analysis.h"
+#include "analyzer.h"
+#include "compressor.h"
+#include "enums.h"
+#include "gecko-legacy.h"
+#include "lzma.h"
+#include "parser.h"
+#include "portable-file-dialogs.h"
+#include "replay.h"
+#include "schema.h"
+#include "shiftjis.h"
+#include "util.h"
 
 #endif //PCH_H
