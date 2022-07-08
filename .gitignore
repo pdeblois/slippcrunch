@@ -24,7 +24,7 @@
 *.lai
 *.la
 *.a
-*.lib
+# *.lib # Removed to add slippc static libraries to the git repo
 
 # Executables
 *.exe
