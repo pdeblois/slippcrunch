@@ -57,6 +57,9 @@
     <ClInclude Include="..\slippc\util.h">
       <Filter>Header Files\slippc</Filter>
     </ClInclude>
+    <ClInclude Include="combo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">

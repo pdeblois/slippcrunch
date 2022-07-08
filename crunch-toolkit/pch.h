@@ -8,6 +8,12 @@
 #define PCH_H
 
 // add headers that you want to pre-compile here
+
+// general external stuff
+#include <vector>
+#include <optional>
+
+//slippc
 #include "analysis.h"
 #include "analyzer.h"
 #include "compressor.h"
