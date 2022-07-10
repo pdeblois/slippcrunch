@@ -6,6 +6,9 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "crunch-toolkit", "crunch-toolkit\crunch-toolkit.vcxproj", "{D1735A4D-3860-4538-9212-B31E902C8376}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "crunch-exe", "crunch-exe\crunch-exe.vcxproj", "{19084A59-74E2-4463-9B36-F55AD2FBA129}"
+	ProjectSection(ProjectDependencies) = postProject
+		{D1735A4D-3860-4538-9212-B31E902C8376} = {D1735A4D-3860-4538-9212-B31E902C8376}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
