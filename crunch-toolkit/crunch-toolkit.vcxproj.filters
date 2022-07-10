@@ -21,40 +21,40 @@
     <ClInclude Include="pch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\slippc\analysis.h">
+    <ClInclude Include="..\slippc\include\analysis.h">
       <Filter>Header Files\slippc</Filter>
     </ClInclude>
-    <ClInclude Include="..\slippc\analyzer.h">
+    <ClInclude Include="..\slippc\include\analyzer.h">
       <Filter>Header Files\slippc</Filter>
     </ClInclude>
-    <ClInclude Include="..\slippc\compressor.h">
+    <ClInclude Include="..\slippc\include\compressor.h">
       <Filter>Header Files\slippc</Filter>
     </ClInclude>
-    <ClInclude Include="..\slippc\enums.h">
+    <ClInclude Include="..\slippc\include\enums.h">
       <Filter>Header Files\slippc</Filter>
     </ClInclude>
-    <ClInclude Include="..\slippc\gecko-legacy.h">
+    <ClInclude Include="..\slippc\include\gecko-legacy.h">
       <Filter>Header Files\slippc</Filter>
     </ClInclude>
-    <ClInclude Include="..\slippc\lzma.h">
+    <ClInclude Include="..\slippc\include\lzma.h">
       <Filter>Header Files\slippc</Filter>
     </ClInclude>
-    <ClInclude Include="..\slippc\parser.h">
+    <ClInclude Include="..\slippc\include\parser.h">
       <Filter>Header Files\slippc</Filter>
     </ClInclude>
-    <ClInclude Include="..\slippc\portable-file-dialogs.h">
+    <ClInclude Include="..\slippc\include\portable-file-dialogs.h">
       <Filter>Header Files\slippc</Filter>
     </ClInclude>
-    <ClInclude Include="..\slippc\replay.h">
+    <ClInclude Include="..\slippc\include\replay.h">
       <Filter>Header Files\slippc</Filter>
     </ClInclude>
-    <ClInclude Include="..\slippc\schema.h">
+    <ClInclude Include="..\slippc\include\schema.h">
       <Filter>Header Files\slippc</Filter>
     </ClInclude>
-    <ClInclude Include="..\slippc\shiftjis.h">
+    <ClInclude Include="..\slippc\include\shiftjis.h">
       <Filter>Header Files\slippc</Filter>
     </ClInclude>
-    <ClInclude Include="..\slippc\util.h">
+    <ClInclude Include="..\slippc\include\util.h">
       <Filter>Header Files\slippc</Filter>
     </ClInclude>
     <ClInclude Include="combo.h">
