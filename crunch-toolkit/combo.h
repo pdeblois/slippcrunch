@@ -2,25 +2,21 @@
 
 #include "pch.h"
 
-namespace crunch {
-	constexpr int COMBO_INTRO_FRAMES = 60;
-	constexpr int COMBO_OUTRO_FRAMES = 60;
-	struct Attack {
-		int frame;
-	};
-	struct Kill {
-		int frame;
-		int direction;
-		int mode; // Star KO, Screen Hit, Blast Zone
-	};
-	struct Punish {
-		std::vector<Attack> attacks;
-		std::optional<Kill> kill;
-		int StartFrame() { return FirstAttackFrame() - COMBO_INTRO_FRAMES; }
-		int FirstAttackFrame() { return attacks.front().frame; }
-		int LastAttackFrame() { return attacks.back().frame; }
-		int KillFrame() { return kill.has_value() ? kill.value().frame : LastAttackFrame(); };
-		int EndFrame() { return KillFrame() + COMBO_OUTRO_FRAMES; };
-		int GetScore();
+namespace Crunch {
+	constexpr uint8_t COMBO_INTRO_FRAMES = 60;
+	constexpr uint8_t COMBO_OUTRO_FRAMES = 60;
+	struct Combo {
+		std::vector<slip::Attack> attacks;
+		slip::Punish punish;
+
+		bool DidKill() const;
+		uint8_t TotalMoveCount() const;
+		uint8_t UniqueMoveCount() const;
+		uint16_t HighestSingleAttackDamage() const;
+		uint16_t TotalDamage() const;
+		bool IsBelowMaxSingleAttackDamageRatioThreshold(float damage_ratio_threshold) const;
+		int MovieStartFrame() const;
+		int MovieEndFrame() const;
+		int Score() const;
 	};
 }

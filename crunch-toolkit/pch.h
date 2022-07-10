@@ -11,6 +11,14 @@
 
 // general external stuff
 #include <vector>
+#include <memory>
+#include <utility>
+#include <future>
+#include <algorithm>
+#include <thread>
+#include <string>
+#include <filesystem>
+#include <queue>
 #include <optional>
 
 //slippc
