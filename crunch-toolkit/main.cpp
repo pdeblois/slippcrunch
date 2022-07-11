@@ -2,7 +2,6 @@
 #include "pch.h"
 
 #include "cruncher.h"
-#include "processor.h"
 #include "combo.h"
 
 bool is_combo_valid(const Crunch::Combo& combo) {

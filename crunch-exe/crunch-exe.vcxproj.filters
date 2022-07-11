@@ -13,10 +13,60 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Header Files\slippc">
+      <UniqueIdentifier>{fe070a4c-2f39-44bf-a2a2-ca06e7ef08ea}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\crunch-toolkit">
+      <UniqueIdentifier>{ea627496-6d15-495c-b89f-a18daa2bf2d8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\crunch-toolkit\combo.h">
+      <Filter>Header Files\crunch-toolkit</Filter>
+    </ClInclude>
+    <ClInclude Include="..\crunch-toolkit\cruncher.h">
+      <Filter>Header Files\crunch-toolkit</Filter>
+    </ClInclude>
+    <ClInclude Include="..\slippc\include\analysis.h">
+      <Filter>Header Files\slippc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\slippc\include\analyzer.h">
+      <Filter>Header Files\slippc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\slippc\include\compressor.h">
+      <Filter>Header Files\slippc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\slippc\include\enums.h">
+      <Filter>Header Files\slippc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\slippc\include\gecko-legacy.h">
+      <Filter>Header Files\slippc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\slippc\include\lzma.h">
+      <Filter>Header Files\slippc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\slippc\include\parser.h">
+      <Filter>Header Files\slippc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\slippc\include\portable-file-dialogs.h">
+      <Filter>Header Files\slippc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\slippc\include\replay.h">
+      <Filter>Header Files\slippc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\slippc\include\schema.h">
+      <Filter>Header Files\slippc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\slippc\include\shiftjis.h">
+      <Filter>Header Files\slippc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\slippc\include\util.h">
+      <Filter>Header Files\slippc</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
