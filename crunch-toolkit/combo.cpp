@@ -8,12 +8,12 @@ namespace Crunch {
 		return Dir::NEUT < punish.kill_dir && punish.kill_dir < Dir::__LAST; 
 	}
 
-	uint8_t Combo::TotalMoveCount() const {
+	size_t Combo::TotalMoveCount() const {
 		return attacks.size();
 	}
 
-	uint8_t Combo::UniqueMoveCount() const {
-		uint8_t unique_move_count = 0;
+	size_t Combo::UniqueMoveCount() const {
+		size_t unique_move_count = 0;
 		std::vector<uint8_t> move_ids(attacks.size());
 		for (const auto& attack : attacks) {
 			if (std::find(move_ids.begin(), move_ids.end(), attack.move_id) == move_ids.end()) {

@@ -16,7 +16,7 @@ std::vector<Crunch::Combo> find_combos_from_analysis(const slip::Analysis& analy
 	const slip::AnalysisPlayer& player_analysis = analysis.ap[port_to_use];
 
 	Crunch::Combo curr_combo;
-	for (std::size_t iAttack = 0; player_analysis.attacks[iAttack].frame > 0; ++iAttack) {
+	for (size_t iAttack = 0; player_analysis.attacks[iAttack].frame > 0; ++iAttack) {
 		const slip::Attack& curr_attack = player_analysis.attacks[iAttack];
 		const slip::Punish& curr_punish = player_analysis.punishes[curr_attack.punish_id];
 
@@ -34,15 +34,15 @@ std::vector<Crunch::Combo> find_combos_from_analysis(const slip::Analysis& analy
 	return combos;
 }
 
-std::vector<Crunch::Combo> find_combos_from_parser(slip::Parser& parser) {
-	std::unique_ptr<slip::Analysis> analysis(parser.analyze());
+std::vector<Crunch::Combo> find_combos_from_parser(std::unique_ptr<slip::Parser> parser) {
+	std::unique_ptr<slip::Analysis> analysis(parser->analyze());
 	return find_combos_from_analysis(*analysis);
 }
 
 std::vector<Crunch::Combo> find_combos_from_replay_filename(std::string replay_filename) {
-	slip::Parser parser(0);
-	parser.load(replay_filename.c_str());
-	return find_combos_from_parser(parser);
+	std::unique_ptr<slip::Parser> parser = std::make_unique<slip::Parser>(0);
+	parser->load(replay_filename.c_str());
+	return find_combos_from_parser(std::move(parser));
 }
 
 int main() {

@@ -17,7 +17,7 @@ namespace Crunch {
 	using CrunchFuncPtr = std::add_pointer_t<void*(const slip::SlippiReplay& combo)>;*/
 	template<typename R>
 	struct CruncherDesc {
-		R(*crunch_func)(slip::Parser&) = nullptr;
+		R(*crunch_func)(std::unique_ptr<slip::Parser>) = nullptr;
 		std::filesystem::path path;
 		bool is_recursive = false;
 	};
@@ -45,7 +45,7 @@ namespace Crunch {
 			// for processor_count, make it std::max(1, processor_count - 1)
 			// that way we can have a main thread free for printing info, if not we'll just have to live
 			// with the CPU being hogged and having slow info printing
-			for (std::size_t iThread = 0; iThread < worker_thread_count; ++iThread) {
+			for (size_t iThread = 0; iThread < worker_thread_count; ++iThread) {
 				std::promise<std::vector<R>> promise;
 				futures.push_back(std::move(promise.get_future()));
 				threads.emplace_back(&Cruncher<R>::worker_func, this, std::move(promise));
@@ -75,10 +75,10 @@ namespace Crunch {
 			auto curr_file_entry = pop_file_entry();
 			while (curr_file_entry.has_value()) {
 
-				slip::Parser parser(0);
-				bool did_parse = parser.load(curr_file_entry.value().path().string().c_str());
+				std::unique_ptr<slip::Parser> parser = std::make_unique<slip::Parser>(0);
+				bool did_parse = parser->load(curr_file_entry.value().path().string().c_str());
 				if (did_parse) {
-					R func_result = m_cruncher_desc.crunch_func(parser);
+					R func_result = m_cruncher_desc.crunch_func(std::move(parser));
 					results.push_back(func_result);
 				}
 

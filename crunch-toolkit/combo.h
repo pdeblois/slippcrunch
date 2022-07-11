@@ -10,8 +10,8 @@ namespace Crunch {
 		slip::Punish punish;
 
 		bool DidKill() const;
-		uint8_t TotalMoveCount() const;
-		uint8_t UniqueMoveCount() const;
+		size_t TotalMoveCount() const;
+		size_t UniqueMoveCount() const;
 		uint16_t HighestSingleAttackDamage() const;
 		uint16_t TotalDamage() const;
 		bool IsBelowMaxSingleAttackDamageRatioThreshold(float damage_ratio_threshold) const;
