@@ -39,24 +39,29 @@ namespace Crunch {
 			std::vector<std::thread> threads;
 			std::vector<std::future<std::vector<R>>> futures;
 			
+			size_t iFileEntryQueue = 0;
+			for (iFileEntryQueue = 0; iFileEntryQueue < worker_thread_count; ++iFileEntryQueue) {
+				m_file_entry_queues.push_back(std::queue<std::filesystem::directory_entry>());
+			}
+			size_t file_count = 0;
+			iFileEntryQueue = 0;
 			for (auto file_entry : std::filesystem::recursive_directory_iterator(m_cruncher_desc.path)) {
 				bool is_file = !file_entry.is_directory() && (file_entry.is_regular_file() || file_entry.is_symlink());
 				bool is_slp_file = is_file && file_entry.path().has_extension() && file_entry.path().extension() == ".slp";
 				if (is_slp_file) {
 					std::cout << "Adding " << file_entry.path() << " to the parse queue" << std::endl;
-					// TODO : Have one queue per thread to get rid of mutex/sync shared access performance hit
-					// and distribute the files across thread file queues to balance byte size and even out performance
-					m_file_entries.push(file_entry);
+					m_file_entry_queues[iFileEntryQueue].push(file_entry);
+					iFileEntryQueue = (++iFileEntryQueue) % worker_thread_count;
+					file_count++;
 				}
 			}
-			size_t file_count = m_file_entries.size();
 
 			std::cout << "Starting " << worker_thread_count << " worker threads to parse " << file_count << " files" << std::endl;
 			std::chrono::steady_clock::time_point crunch_begin_time = std::chrono::steady_clock::now();
 			for (size_t iThread = 0; iThread < worker_thread_count; ++iThread) {
 				std::promise<std::vector<R>> promise;
 				futures.push_back(std::move(promise.get_future()));
-				std::thread thread(&Cruncher<R>::worker_func, this, std::move(promise));
+				std::thread thread(&Cruncher<R>::worker_func, this, m_file_entry_queues[iThread], std::move(promise));
 				threads.push_back(std::move(thread));
 			}
 
@@ -76,15 +81,14 @@ namespace Crunch {
 	private:
 		CruncherDesc<R> m_cruncher_desc;
 
-		std::mutex m_file_entries_mutex;
-		std::queue<std::filesystem::directory_entry> m_file_entries;
+		std::vector<std::queue<std::filesystem::directory_entry>> m_file_entry_queues;
 
 		// should be floating function or not?
 		// should templated stuff be marked inline or not?
-		void worker_func(std::promise<std::vector<R>>&& promise) {
+		void worker_func(std::queue<std::filesystem::directory_entry> file_entry_queue, std::promise<std::vector<R>>&& promise) {
 			std::vector<R> results;
 
-			auto curr_file_entry = pop_file_entry();
+			auto curr_file_entry = pop_file_entry(&file_entry_queue);
 			while (curr_file_entry.has_value()) {
 
 				std::cout << "Parsing " << curr_file_entry.value().path() << std::endl;
@@ -96,18 +100,17 @@ namespace Crunch {
 					results.push_back(func_result);
 				}
 
-				curr_file_entry = pop_file_entry();
+				curr_file_entry = pop_file_entry(&file_entry_queue);
 			}
 
 			promise.set_value(results);
 		}
 
-		std::optional<std::filesystem::directory_entry> pop_file_entry() {
-			std::lock_guard lock(m_file_entries_mutex);
+		std::optional<std::filesystem::directory_entry> pop_file_entry(std::queue<std::filesystem::directory_entry>* file_entry_queue) {
 
-			if (!m_file_entries.empty()) {
-				auto file_entry = m_file_entries.front();
-				m_file_entries.pop();
+			if (!file_entry_queue->empty()) {
+				auto file_entry = file_entry_queue->front();
+				file_entry_queue->pop();
 				return file_entry;
 			}
 
