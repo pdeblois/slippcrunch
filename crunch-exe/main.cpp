@@ -58,7 +58,11 @@ int main() {
 		std::cout << "Press enter to start the crunch : ";
 		std::cin.get();
 		std::vector<std::vector<Crunch::Combo>> crunch_results = cruncher.Crunch();
-		std::cout << "Found " << crunch_results.size() << " combos" << std::endl;
+		size_t combo_count = 0;
+		for (const auto& crunch_result : crunch_results) {
+			combo_count += crunch_result.size();
+		}
+		std::cout << "Found " << combo_count << " combos" << std::endl;
 	}
 	catch (std::exception& error) {
 		std::cout << error.what() << std::endl;
