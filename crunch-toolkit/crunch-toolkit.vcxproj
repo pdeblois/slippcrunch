@@ -107,7 +107,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <Lib>
-      <AdditionalDependencies>slippc-$(PlatformShortName).lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>slippc-$(PlatformShortName)-Debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Lib>
     <Lib>
       <AdditionalLibraryDirectories>$(SolutionDir)slippc;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -157,7 +157,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <Lib>
-      <AdditionalDependencies>slippc-$(PlatformShortName).lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>slippc-$(PlatformShortName)-Debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Lib>
     <Lib>
       <AdditionalLibraryDirectories>$(SolutionDir)slippc;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
