@@ -44,6 +44,8 @@ namespace Crunch {
 				bool is_slp_file = is_file && file_entry.path().has_extension() && file_entry.path().extension() == ".slp";
 				if (is_slp_file) {
 					std::cout << "Adding " << file_entry.path() << " to the parse queue" << std::endl;
+					// TODO : Have one queue per thread to get rid of mutex/sync shared access performance hit
+					// and distribute the files across thread file queues to balance byte size and even out performance
 					m_file_entries.push(file_entry);
 				}
 			}
