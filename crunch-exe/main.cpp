@@ -50,10 +50,22 @@ std::vector<Crunch::Combo> find_combos_from_replay_filename(std::string replay_f
 }
 
 int main() {
-	Crunch::CruncherDesc<std::vector<Crunch::Combo>> a;
-	a.crunch_func = find_combos_from_parser;
-	Crunch::Cruncher<std::vector<Crunch::Combo>> b(a);
-	std::vector<std::vector<Crunch::Combo>> c = b.Crunch();
+	try {
+		Crunch::CruncherDesc<std::vector<Crunch::Combo>> a;
+		a.crunch_func = find_combos_from_parser;
+		std::cout << "Enter path : ";
+		std::cin >> a.path;
+		a.path = std::filesystem::current_path();
+		std::cout << std::filesystem::is_directory(a.path) << std::endl;
+		Crunch::Cruncher<std::vector<Crunch::Combo>> b(a);
+		std::vector<std::vector<Crunch::Combo>> c = b.Crunch();
+		std::cout << "Found " << c.size() << " combos" << std::endl;
+	}
+	catch (std::filesystem::filesystem_error& error) {
+		std::cout << error.what() << std::endl;
+	}
+	int i;
+	std::cin >> i;
 }
 
 // Run program: Ctrl + F5 or Debug > Start Without Debugging menu

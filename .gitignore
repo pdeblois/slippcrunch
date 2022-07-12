@@ -41,3 +41,6 @@ Release/
 
 # VSCode
 .vscode/
+
+# Slippi
+*.slp
