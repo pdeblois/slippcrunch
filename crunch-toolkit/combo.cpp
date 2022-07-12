@@ -38,11 +38,15 @@ namespace Crunch {
 		return total_damage;
 	}
 
-	bool Combo::IsBelowMaxSingleAttackDamageRatioThreshold(float damage_ratio_threshold) const {
+	float Combo::HighestSingleAttackDamageRatio() const {
 		auto highest_single_attack_damage = HighestSingleAttackDamage();
 		auto total_damage = TotalDamage();
 		auto ratio = static_cast<float>(highest_single_attack_damage) / static_cast<float>(total_damage);
-		return ratio <= damage_ratio_threshold;
+		return ratio;
+	}
+
+	bool Combo::ExceedsSingleAttackDamageRatioThreshold(float damage_ratio_threshold) const {
+		return HighestSingleAttackDamageRatio() > damage_ratio_threshold;
 	}
 
 	int Combo::MovieStartFrame() const { 
