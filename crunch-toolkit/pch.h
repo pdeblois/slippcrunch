@@ -11,6 +11,7 @@
 
 // general external stuff
 #include <vector>
+#include <list>
 #include <memory>
 #include <utility>
 #include <future>

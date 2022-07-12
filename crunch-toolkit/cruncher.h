@@ -38,6 +38,7 @@ namespace Crunch {
 
 			std::vector<std::thread> threads;
 			std::vector<std::future<std::vector<R>>> futures;
+			std::list<std::atomic_int> processed_file_counts(worker_thread_count);
 			
 			size_t iFileEntryQueue = 0;
 			for (iFileEntryQueue = 0; iFileEntryQueue < worker_thread_count; ++iFileEntryQueue) {
@@ -58,11 +59,26 @@ namespace Crunch {
 
 			std::cout << "Starting " << worker_thread_count << " worker threads to parse " << file_count << " files" << std::endl;
 			std::chrono::steady_clock::time_point crunch_begin_time = std::chrono::steady_clock::now();
+			auto it_processed_file_counts = processed_file_counts.begin();
 			for (size_t iThread = 0; iThread < worker_thread_count; ++iThread) {
 				std::promise<std::vector<R>> promise;
-				futures.push_back(std::move(promise.get_future()));
-				std::thread thread(&Cruncher<R>::worker_func, this, m_file_entry_queues[iThread], std::move(promise));
-				threads.push_back(std::move(thread));
+				futures.emplace_back(std::move(promise.get_future()));
+				threads.emplace_back(&Cruncher<R>::worker_func, this, m_file_entry_queues[iThread], &(*it_processed_file_counts), std::move(promise));
+				it_processed_file_counts = std::next(it_processed_file_counts);
+			}
+
+			while (running_thread_count(&futures) > 0) {
+				it_processed_file_counts = processed_file_counts.begin();
+				for (size_t iThread = 0; iThread < worker_thread_count; ++iThread) {
+					int thread_processed_file_count = (*it_processed_file_counts).load();
+					it_processed_file_counts = std::next(it_processed_file_counts);
+					//int thread_processed_file_count = 0;
+					int thread_file_queue_size = m_file_entry_queues[iThread].size();
+					//float thread_progress = static_cast<float>(thread_processed_file_count) / static_cast<float>(thread_file_queue_size);
+					std::cout << "T" << iThread << ":" << thread_processed_file_count << "/" << thread_file_queue_size << " # ";
+				}
+				std::cout << std::endl;
+				std::this_thread::sleep_for(std::chrono::milliseconds(500));
 			}
 
 			for (auto& thread : threads) {
@@ -85,19 +101,20 @@ namespace Crunch {
 
 		// should be floating function or not?
 		// should templated stuff be marked inline or not?
-		void worker_func(std::queue<std::filesystem::directory_entry> file_entry_queue, std::promise<std::vector<R>>&& promise) {
+		void worker_func(std::queue<std::filesystem::directory_entry> file_entry_queue, std::atomic<int>* processed_file_count, std::promise<std::vector<R>>&& promise) {
 			std::vector<R> results;
 
 			auto curr_file_entry = pop_file_entry(&file_entry_queue);
 			while (curr_file_entry.has_value()) {
 
-				std::cout << "Parsing " << curr_file_entry.value().path() << std::endl;
+				//std::cout << "Parsing " << curr_file_entry.value().path() << std::endl;
 				std::unique_ptr<slip::Parser> parser = std::make_unique<slip::Parser>(0);
 				bool did_parse = parser->load(curr_file_entry.value().path().string().c_str());
 				if (did_parse) {
-					std::cout << "Crunching " << curr_file_entry.value().path() << std::endl;
+					//std::cout << "Crunching " << curr_file_entry.value().path() << std::endl;
 					R func_result = m_cruncher_desc.crunch_func(std::move(parser));
 					results.push_back(func_result);
+					processed_file_count->store(processed_file_count->load() + 1);
 				}
 
 				curr_file_entry = pop_file_entry(&file_entry_queue);
@@ -115,6 +132,17 @@ namespace Crunch {
 			}
 
 			return std::nullopt;
+		}
+
+		size_t running_thread_count(std::vector<std::future<std::vector<R>>>* futures) {
+			size_t running_thread_count = 0;
+			for (auto& future : (*futures)) {
+				auto status = future.wait_for(std::chrono::milliseconds::zero());
+				if (status != std::future_status::ready) {
+					running_thread_count++;
+				}
+			}
+			return running_thread_count;
 		}
 	};
 }
