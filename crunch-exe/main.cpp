@@ -51,21 +51,19 @@ std::vector<Crunch::Combo> find_combos_from_replay_filename(std::string replay_f
 
 int main() {
 	try {
-		Crunch::CruncherDesc<std::vector<Crunch::Combo>> a;
-		a.crunch_func = find_combos_from_parser;
-		std::cout << "Enter path : ";
-		std::cin >> a.path;
-		a.path = std::filesystem::current_path();
-		std::cout << std::filesystem::is_directory(a.path) << std::endl;
-		Crunch::Cruncher<std::vector<Crunch::Combo>> b(a);
-		std::vector<std::vector<Crunch::Combo>> c = b.Crunch();
-		std::cout << "Found " << c.size() << " combos" << std::endl;
+		Crunch::CruncherDesc<std::vector<Crunch::Combo>> cruncher_desc;
+		cruncher_desc.crunch_func = find_combos_from_parser;
+		cruncher_desc.path = std::filesystem::current_path();
+		Crunch::Cruncher<std::vector<Crunch::Combo>> cruncher(cruncher_desc);
+		std::cout << "Press enter to start the crunch : ";
+		std::cin.get();
+		std::vector<std::vector<Crunch::Combo>> crunch_results = cruncher.Crunch();
+		std::cout << "Found " << crunch_results.size() << " combos" << std::endl;
 	}
-	catch (std::filesystem::filesystem_error& error) {
+	catch (std::exception& error) {
 		std::cout << error.what() << std::endl;
 	}
-	int i;
-	std::cin >> i;
+	std::cin.get();
 }
 
 // Run program: Ctrl + F5 or Debug > Start Without Debugging menu

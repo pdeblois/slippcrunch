@@ -32,40 +32,38 @@ namespace Crunch {
 		std::vector<R> Crunch() {
 			const auto processor_count = std::thread::hardware_concurrency();
 			const auto worker_thread_count = processor_count > 2 ? processor_count - 1 : 1; // leave 1 processor free for main thread if possible
-			
+			// for processor_count, make it std::max(1, processor_count - 1)
+			// that way we can have a main thread free for printing info, if not we'll just have to live
+			// with the CPU being hogged and having slow info printing
+
 			std::vector<std::thread> threads;
 			std::vector<std::future<std::vector<R>>> futures;
 			
 			for (auto file_entry : std::filesystem::recursive_directory_iterator(m_cruncher_desc.path)) {
-				if (!file_entry.is_directory() && (file_entry.is_regular_file() || file_entry.is_symlink())) {
+				bool is_file = !file_entry.is_directory() && (file_entry.is_regular_file() || file_entry.is_symlink());
+				bool is_slp_file = is_file && file_entry.path().has_extension() && file_entry.path().extension() == ".slp";
+				if (is_slp_file) {
+					std::cout << "Adding " << file_entry.path() << " to the parse queue" << std::endl;
 					m_file_entries.push(file_entry);
-					std::cout << file_entry.path() << std::endl;
 				}
 			}
-			std::cout << "Has " << threads.size() << " threads" << std::endl;
-			// for processor_count, make it std::max(1, processor_count - 1)
-			// that way we can have a main thread free for printing info, if not we'll just have to live
-			// with the CPU being hogged and having slow info printing
-			std::cout << "Main TID : " << std::this_thread::get_id() << std::endl;
-			std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+			size_t file_count = m_file_entries.size();
+
+			std::cout << "Starting " << worker_thread_count << " worker threads to parse " << file_count << " files" << std::endl;
+			std::chrono::steady_clock::time_point crunch_begin_time = std::chrono::steady_clock::now();
 			for (size_t iThread = 0; iThread < worker_thread_count; ++iThread) {
 				std::promise<std::vector<R>> promise;
 				futures.push_back(std::move(promise.get_future()));
 				std::thread thread(&Cruncher<R>::worker_func, this, std::move(promise));
-				std::cout << "Creating TID : " << thread.get_id() << std::endl;
 				threads.push_back(std::move(thread));
 			}
 
-			size_t thread_count = threads.size();
-			std::cout << "Created " << threads.size() << " threads" << std::endl;
 			for (auto& thread : threads) {
-				std::cout << "Joining TID : " << thread.get_id() << " Is joinable? : " << thread.joinable() << std::endl;
 				thread.join();
 			}
-			std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+			std::chrono::steady_clock::time_point crunch_end_time = std::chrono::steady_clock::now();
+			std::cout << "Crunched " << file_count << " files in " << std::chrono::duration_cast<std::chrono::seconds>(crunch_end_time - crunch_begin_time).count() << " seconds" << std::endl;
 
-			std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::seconds>(end - begin).count() << "[s]" << std::endl;
-			std::cout << thread_count << "threads" << std::endl;
 			std::vector<R> results;
 			for (auto& future : futures) {
 				auto future_result = future.get();
@@ -87,11 +85,11 @@ namespace Crunch {
 			auto curr_file_entry = pop_file_entry();
 			while (curr_file_entry.has_value()) {
 
-				std::cout << "Checking " << curr_file_entry.value().path() << std::endl;
+				std::cout << "Parsing " << curr_file_entry.value().path() << std::endl;
 				std::unique_ptr<slip::Parser> parser = std::make_unique<slip::Parser>(0);
 				bool did_parse = parser->load(curr_file_entry.value().path().string().c_str());
 				if (did_parse) {
-					std::cout << "Analyzing " << curr_file_entry.value().path() << std::endl;
+					std::cout << "Crunching " << curr_file_entry.value().path() << std::endl;
 					R func_result = m_cruncher_desc.crunch_func(std::move(parser));
 					results.push_back(func_result);
 				}
