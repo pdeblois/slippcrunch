@@ -39,8 +39,8 @@ namespace Crunch {
 			std::vector<std::queue<std::filesystem::directory_entry>> file_entry_queues(worker_thread_count);
 			std::vector<std::atomic_size_t> processed_file_counts(worker_thread_count);
 			
-			std::chrono::steady_clock::time_point file_begin_time = std::chrono::steady_clock::now();
 			// Setup the file queues for each thread
+			std::chrono::steady_clock::time_point file_begin_time = std::chrono::steady_clock::now();
 			size_t file_count = 0;
 			for (const auto& file_entry : std::filesystem::recursive_directory_iterator(m_cruncher_desc.path)) {
 				bool is_file = !file_entry.is_directory() && (file_entry.is_regular_file() || file_entry.is_symlink());
