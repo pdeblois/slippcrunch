@@ -127,7 +127,7 @@ namespace Crunch {
 		}
 
 		bool are_threads_running(std::vector<std::future<std::vector<R>>>* thread_futures) {
-			for (auto& thread_future : (*thread_futures)) {
+			for (const auto& thread_future : (*thread_futures)) {
 				auto status = thread_future.wait_for(std::chrono::milliseconds::zero());
 				if (status != std::future_status::ready) {
 					return true;
