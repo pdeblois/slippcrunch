@@ -52,19 +52,19 @@ namespace Crunch {
 			}
 
 			std::vector<std::thread> threads;
-			std::vector<std::future<std::vector<R>>> futures;
+			std::vector<std::future<std::vector<R>>> thread_futures;
 			
 			// Spawn the threads
 			std::cout << "Starting " << worker_thread_count << " worker threads to parse " << file_count << " files" << std::endl;
 			std::chrono::steady_clock::time_point crunch_begin_time = std::chrono::steady_clock::now();
 			for (size_t iThread = 0; iThread < worker_thread_count; ++iThread) {
 				std::promise<std::vector<R>> promise;
-				futures.emplace_back(std::move(promise.get_future()));
+				thread_futures.emplace_back(std::move(promise.get_future()));
 				threads.emplace_back(&Cruncher<R>::worker_func, this, file_entry_queues[iThread], &(processed_file_counts[iThread]), std::move(promise));
 			}
 
 			// Log the threads' progress
-			while (running_thread_count(&futures) > 0) {
+			while (are_threads_running(&thread_futures)) {
 				for (size_t iThread = 0; iThread < worker_thread_count; ++iThread) {
 					size_t thread_processed_file_count = (processed_file_counts[iThread]).load();
 					size_t thread_file_queue_size = file_entry_queues[iThread].size();
@@ -85,9 +85,9 @@ namespace Crunch {
 			// Each element of the returned results vector is the result of a call to crunch_func,
 			// i.e. one element of the results vector = the result of crunch_func'ing one slip::Parser/.slp replay file
 			std::vector<R> results;
-			for (auto& future : futures) {
-				auto future_result = future.get();
-				results.insert(results.end(), future_result.begin(), future_result.end());
+			for (auto& thread_future : thread_futures) {
+				auto thread_future_result = thread_future.get();
+				results.insert(results.end(), thread_future_result.begin(), thread_future_result.end());
 			}
 			return results;
 		}
@@ -126,15 +126,14 @@ namespace Crunch {
 			return std::nullopt;
 		}
 
-		size_t running_thread_count(std::vector<std::future<std::vector<R>>>* futures) {
-			size_t running_thread_count = 0;
-			for (auto& future : (*futures)) {
-				auto status = future.wait_for(std::chrono::milliseconds::zero());
+		bool are_threads_running(std::vector<std::future<std::vector<R>>>* thread_futures) {
+			for (auto& thread_future : (*thread_futures)) {
+				auto status = thread_future.wait_for(std::chrono::milliseconds::zero());
 				if (status != std::future_status::ready) {
-					running_thread_count++;
+					return true;
 				}
 			}
-			return running_thread_count;
+			return false;
 		}
 	};
 }
