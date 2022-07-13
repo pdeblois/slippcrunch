@@ -26,7 +26,7 @@ namespace Crunch {
 		//typedef RETURN_TYPE(*FUNC_PTR)(const slip::SlippiReplay& replay);
 		//FUNC_PTR func;
 	public:
-		Cruncher(CruncherDesc<R> cruncher_desc) : m_cruncher_desc(cruncher_desc) {
+		Cruncher(const CruncherDesc<R>& cruncher_desc) : m_cruncher_desc(cruncher_desc) {
 			// empty ctor, nothing to do here (m_cruncher_desc already assigned through initializer list)
 		}
 		std::vector<R> Crunch() {
