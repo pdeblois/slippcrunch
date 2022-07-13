@@ -3,7 +3,7 @@
 #include "pch.h"
 
 //template<typename R>
-//void worker_thread_func(std::promise<R>&& promise) {
+//void crunch_files(std::promise<R>&& promise) {
 //	std::vector<R> result;
 //
 //	promise.set_value(result);
@@ -32,10 +32,7 @@ namespace Crunch {
 		std::vector<R> Crunch() {
 			const size_t processor_count = std::thread::hardware_concurrency();
 			const size_t worker_thread_count = processor_count > 2 ? processor_count - 1 : 1; // leave 1 processor free for main thread if possible
-			// for processor_count, make it std::max(1, processor_count - 1)
-			// that way we can have a main thread free for printing info, if not we'll just have to live
-			// with the CPU being hogged and having slow info printing
-
+			
 			std::vector<std::queue<std::filesystem::directory_entry>> file_entry_queues(worker_thread_count);
 			std::vector<std::atomic_size_t> processed_file_counts(worker_thread_count);
 			
@@ -55,20 +52,17 @@ namespace Crunch {
 			std::cout << "Added " << file_count << " files in " << std::chrono::duration_cast<std::chrono::seconds>(file_end_time - file_begin_time).count() << " seconds" << std::endl;
 			std::cin.get();
 
-			std::vector<std::thread> threads;
-			std::vector<std::future<std::vector<R>>> thread_futures;
+			std::vector<std::future<std::vector<R>>> futures;
 			
 			// Spawn the threads
 			std::cout << "Starting " << worker_thread_count << " worker threads to parse " << file_count << " files" << std::endl;
 			std::chrono::steady_clock::time_point crunch_begin_time = std::chrono::steady_clock::now();
 			for (size_t iThread = 0; iThread < worker_thread_count; ++iThread) {
-				std::promise<std::vector<R>> promise;
-				thread_futures.emplace_back(std::move(promise.get_future()));
-				threads.emplace_back(&Cruncher<R>::worker_thread_func, this, file_entry_queues[iThread], &(processed_file_counts[iThread]), std::move(promise));
+				futures.push_back(std::async(std::launch::async, &Cruncher<R>::crunch_files, this, file_entry_queues[iThread], &(processed_file_counts[iThread])));
 			}
 
 			// Log the threads' progress
-			while (are_threads_running(&thread_futures)) {
+			while (!are_futures_ready(futures)) {
 				for (size_t iThread = 0; iThread < worker_thread_count; ++iThread) {
 					size_t thread_processed_file_count = (processed_file_counts[iThread]).load();
 					size_t thread_file_queue_size = file_entry_queues[iThread].size();
@@ -79,8 +73,8 @@ namespace Crunch {
 			}
 
 			// Wait for all threads to complete their workload
-			for (auto& thread : threads) {
-				thread.join();
+			for (const auto& future : futures) {
+				future.wait();
 			}
 			std::chrono::steady_clock::time_point crunch_end_time = std::chrono::steady_clock::now();
 			std::cout << "Crunched " << file_count << " files in " << std::chrono::duration_cast<std::chrono::seconds>(crunch_end_time - crunch_begin_time).count() << " seconds" << std::endl;
@@ -89,9 +83,9 @@ namespace Crunch {
 			// Each element of the returned results vector is the result of a call to crunch_func,
 			// i.e. one element of the results vector = the result of crunch_func'ing one slip::Parser/.slp replay file
 			std::vector<R> results;
-			for (auto& thread_future : thread_futures) {
-				auto thread_future_result = thread_future.get();
-				results.insert(results.end(), thread_future_result.begin(), thread_future_result.end());
+			for (auto& future : futures) {
+				auto future_result = future.get();
+				results.insert(results.end(), future_result.begin(), future_result.end());
 			}
 			return results;
 		}
@@ -100,7 +94,7 @@ namespace Crunch {
 
 		// should be floating function or not?
 		// should templated stuff be marked inline or not?
-		void worker_thread_func(std::queue<std::filesystem::directory_entry> file_entry_queue, std::atomic_size_t* processed_file_count, std::promise<std::vector<R>>&& promise) {
+		std::vector<R> crunch_files(std::queue<std::filesystem::directory_entry> file_entry_queue, std::atomic_size_t* processed_file_count) {
 			std::vector<R> results;
 
 			auto curr_file_entry = pop_file_entry(&file_entry_queue);
@@ -118,7 +112,7 @@ namespace Crunch {
 				curr_file_entry = pop_file_entry(&file_entry_queue);
 			}
 
-			promise.set_value(results);
+			return results;
 		}
 
 		std::optional<std::filesystem::directory_entry> pop_file_entry(std::queue<std::filesystem::directory_entry>* file_entry_queue) {
@@ -130,14 +124,14 @@ namespace Crunch {
 			return std::nullopt;
 		}
 
-		bool are_threads_running(std::vector<std::future<std::vector<R>>>* thread_futures) {
-			for (const auto& thread_future : (*thread_futures)) {
-				auto status = thread_future.wait_for(std::chrono::milliseconds::zero());
-				if (status != std::future_status::ready) {
-					return true;
+		bool are_futures_ready(const std::vector<std::future<std::vector<R>>>& futures) {
+			for (const auto& future : futures) {
+				auto future_status = future.wait_for(std::chrono::milliseconds::zero());
+				if (future_status != std::future_status::ready) {
+					return false;
 				}
 			}
-			return false;
+			return true;
 		}
 	};
 }
