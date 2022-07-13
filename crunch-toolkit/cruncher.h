@@ -39,6 +39,7 @@ namespace Crunch {
 			std::vector<std::queue<std::filesystem::directory_entry>> file_entry_queues(worker_thread_count);
 			std::vector<std::atomic_size_t> processed_file_counts(worker_thread_count);
 			
+			// Setup the file queues for each thread
 			size_t file_count = 0;
 			for (const auto& file_entry : std::filesystem::recursive_directory_iterator(m_cruncher_desc.path)) {
 				bool is_file = !file_entry.is_directory() && (file_entry.is_regular_file() || file_entry.is_symlink());
@@ -53,6 +54,7 @@ namespace Crunch {
 			std::vector<std::thread> threads;
 			std::vector<std::future<std::vector<R>>> futures;
 			
+			// Spawn the threads
 			std::cout << "Starting " << worker_thread_count << " worker threads to parse " << file_count << " files" << std::endl;
 			std::chrono::steady_clock::time_point crunch_begin_time = std::chrono::steady_clock::now();
 			for (size_t iThread = 0; iThread < worker_thread_count; ++iThread) {
@@ -61,24 +63,27 @@ namespace Crunch {
 				threads.emplace_back(&Cruncher<R>::worker_func, this, file_entry_queues[iThread], &(processed_file_counts[iThread]), std::move(promise));
 			}
 
+			// Log the threads' progress
 			while (running_thread_count(&futures) > 0) {
 				for (size_t iThread = 0; iThread < worker_thread_count; ++iThread) {
 					size_t thread_processed_file_count = (processed_file_counts[iThread]).load();
-					//int thread_processed_file_count = 0;
 					size_t thread_file_queue_size = file_entry_queues[iThread].size();
-					//float thread_progress = static_cast<float>(thread_processed_file_count) / static_cast<float>(thread_file_queue_size);
 					std::cout << "T" << iThread << ":" << thread_processed_file_count << "/" << thread_file_queue_size << " # ";
 				}
 				std::cout << std::endl;
 				std::this_thread::sleep_for(std::chrono::milliseconds(500));
 			}
 
+			// Wait for all threads to complete their workload
 			for (auto& thread : threads) {
 				thread.join();
 			}
 			std::chrono::steady_clock::time_point crunch_end_time = std::chrono::steady_clock::now();
 			std::cout << "Crunched " << file_count << " files in " << std::chrono::duration_cast<std::chrono::seconds>(crunch_end_time - crunch_begin_time).count() << " seconds" << std::endl;
 
+			// Aggregate the results of each thread into a single vector of results
+			// Each element of the returned results vector is the result of a call to crunch_func,
+			// i.e. one element of the results vector = the result of crunch_func'ing one slip::Parser/.slp replay file
 			std::vector<R> results;
 			for (auto& future : futures) {
 				auto future_result = future.get();
@@ -96,7 +101,6 @@ namespace Crunch {
 
 			auto curr_file_entry = pop_file_entry(&file_entry_queue);
 			while (curr_file_entry.has_value()) {
-
 				//std::cout << "Parsing " << curr_file_entry.value().path() << std::endl;
 				std::unique_ptr<slip::Parser> parser = std::make_unique<slip::Parser>(0);
 				bool did_parse = parser->load(curr_file_entry.value().path().string().c_str());
@@ -114,13 +118,11 @@ namespace Crunch {
 		}
 
 		std::optional<std::filesystem::directory_entry> pop_file_entry(std::queue<std::filesystem::directory_entry>* file_entry_queue) {
-
 			if (!file_entry_queue->empty()) {
 				auto file_entry = file_entry_queue->front();
 				file_entry_queue->pop();
 				return file_entry;
 			}
-
 			return std::nullopt;
 		}
 
