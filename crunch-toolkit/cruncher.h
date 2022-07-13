@@ -36,16 +36,11 @@ namespace Crunch {
 			// that way we can have a main thread free for printing info, if not we'll just have to live
 			// with the CPU being hogged and having slow info printing
 
-			std::vector<std::queue<std::filesystem::directory_entry>> file_entry_queues;
+			std::vector<std::queue<std::filesystem::directory_entry>> file_entry_queues(worker_thread_count);
 			std::vector<std::atomic_size_t> processed_file_counts(worker_thread_count);
 			
-			size_t iFileEntryQueue = 0;
-			for (iFileEntryQueue = 0; iFileEntryQueue < worker_thread_count; ++iFileEntryQueue) {
-				file_entry_queues.push_back(std::queue<std::filesystem::directory_entry>());
-			}
-
 			size_t file_count = 0;
-			iFileEntryQueue = 0;
+			size_t iFileEntryQueue = 0;
 			for (auto file_entry : std::filesystem::recursive_directory_iterator(m_cruncher_desc.path)) {
 				bool is_file = !file_entry.is_directory() && (file_entry.is_regular_file() || file_entry.is_symlink());
 				bool is_slp_file = is_file && file_entry.path().has_extension() && file_entry.path().extension() == ".slp";
