@@ -40,14 +40,12 @@ namespace Crunch {
 			std::vector<std::atomic_size_t> processed_file_counts(worker_thread_count);
 			
 			size_t file_count = 0;
-			size_t iFileEntryQueue = 0;
-			for (auto file_entry : std::filesystem::recursive_directory_iterator(m_cruncher_desc.path)) {
+			for (const auto& file_entry : std::filesystem::recursive_directory_iterator(m_cruncher_desc.path)) {
 				bool is_file = !file_entry.is_directory() && (file_entry.is_regular_file() || file_entry.is_symlink());
 				bool is_slp_file = is_file && file_entry.path().has_extension() && file_entry.path().extension() == ".slp";
 				if (is_slp_file) {
 					std::cout << "Adding " << file_entry.path() << " to the parse queue" << std::endl;
-					file_entry_queues[iFileEntryQueue].push(file_entry);
-					iFileEntryQueue = (++iFileEntryQueue) % worker_thread_count;
+					file_entry_queues[file_count % worker_thread_count].push(file_entry);
 					file_count++;
 				}
 			}
