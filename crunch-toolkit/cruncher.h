@@ -37,7 +37,7 @@ namespace Crunch {
 			// with the CPU being hogged and having slow info printing
 
 			std::vector<std::queue<std::filesystem::directory_entry>> file_entry_queues;
-			std::vector<std::atomic_int> processed_file_counts(worker_thread_count);
+			std::vector<std::atomic_size_t> processed_file_counts(worker_thread_count);
 			
 			size_t iFileEntryQueue = 0;
 			for (iFileEntryQueue = 0; iFileEntryQueue < worker_thread_count; ++iFileEntryQueue) {
@@ -70,9 +70,9 @@ namespace Crunch {
 
 			while (running_thread_count(&futures) > 0) {
 				for (size_t iThread = 0; iThread < worker_thread_count; ++iThread) {
-					int thread_processed_file_count = (processed_file_counts[iThread]).load();
+					size_t thread_processed_file_count = (processed_file_counts[iThread]).load();
 					//int thread_processed_file_count = 0;
-					int thread_file_queue_size = file_entry_queues[iThread].size();
+					size_t thread_file_queue_size = file_entry_queues[iThread].size();
 					//float thread_progress = static_cast<float>(thread_processed_file_count) / static_cast<float>(thread_file_queue_size);
 					std::cout << "T" << iThread << ":" << thread_processed_file_count << "/" << thread_file_queue_size << " # ";
 				}
@@ -98,7 +98,7 @@ namespace Crunch {
 
 		// should be floating function or not?
 		// should templated stuff be marked inline or not?
-		void worker_func(std::queue<std::filesystem::directory_entry> file_entry_queue, std::atomic<int>* processed_file_count, std::promise<std::vector<R>>&& promise) {
+		void worker_func(std::queue<std::filesystem::directory_entry> file_entry_queue, std::atomic_size_t* processed_file_count, std::promise<std::vector<R>>&& promise) {
 			std::vector<R> results;
 
 			auto curr_file_entry = pop_file_entry(&file_entry_queue);
