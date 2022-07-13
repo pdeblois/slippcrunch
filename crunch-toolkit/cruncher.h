@@ -3,7 +3,7 @@
 #include "pch.h"
 
 //template<typename R>
-//void worker_func(std::promise<R>&& promise) {
+//void worker_thread_func(std::promise<R>&& promise) {
 //	std::vector<R> result;
 //
 //	promise.set_value(result);
@@ -64,7 +64,7 @@ namespace Crunch {
 			for (size_t iThread = 0; iThread < worker_thread_count; ++iThread) {
 				std::promise<std::vector<R>> promise;
 				thread_futures.emplace_back(std::move(promise.get_future()));
-				threads.emplace_back(&Cruncher<R>::worker_func, this, file_entry_queues[iThread], &(processed_file_counts[iThread]), std::move(promise));
+				threads.emplace_back(&Cruncher<R>::worker_thread_func, this, file_entry_queues[iThread], &(processed_file_counts[iThread]), std::move(promise));
 			}
 
 			// Log the threads' progress
@@ -100,7 +100,7 @@ namespace Crunch {
 
 		// should be floating function or not?
 		// should templated stuff be marked inline or not?
-		void worker_func(std::queue<std::filesystem::directory_entry> file_entry_queue, std::atomic_size_t* processed_file_count, std::promise<std::vector<R>>&& promise) {
+		void worker_thread_func(std::queue<std::filesystem::directory_entry> file_entry_queue, std::atomic_size_t* processed_file_count, std::promise<std::vector<R>>&& promise) {
 			std::vector<R> results;
 
 			auto curr_file_entry = pop_file_entry(&file_entry_queue);
