@@ -36,14 +36,14 @@ namespace Crunch {
 			// that way we can have a main thread free for printing info, if not we'll just have to live
 			// with the CPU being hogged and having slow info printing
 
-			std::vector<std::thread> threads;
-			std::vector<std::future<std::vector<R>>> futures;
+			std::vector<std::queue<std::filesystem::directory_entry>> file_entry_queues;
 			std::list<std::atomic_int> processed_file_counts(worker_thread_count);
 			
 			size_t iFileEntryQueue = 0;
 			for (iFileEntryQueue = 0; iFileEntryQueue < worker_thread_count; ++iFileEntryQueue) {
-				m_file_entry_queues.push_back(std::queue<std::filesystem::directory_entry>());
+				file_entry_queues.push_back(std::queue<std::filesystem::directory_entry>());
 			}
+
 			size_t file_count = 0;
 			iFileEntryQueue = 0;
 			for (auto file_entry : std::filesystem::recursive_directory_iterator(m_cruncher_desc.path)) {
@@ -51,19 +51,22 @@ namespace Crunch {
 				bool is_slp_file = is_file && file_entry.path().has_extension() && file_entry.path().extension() == ".slp";
 				if (is_slp_file) {
 					std::cout << "Adding " << file_entry.path() << " to the parse queue" << std::endl;
-					m_file_entry_queues[iFileEntryQueue].push(file_entry);
+					file_entry_queues[iFileEntryQueue].push(file_entry);
 					iFileEntryQueue = (++iFileEntryQueue) % worker_thread_count;
 					file_count++;
 				}
 			}
 
+			std::vector<std::thread> threads;
+			std::vector<std::future<std::vector<R>>> futures;
+			
 			std::cout << "Starting " << worker_thread_count << " worker threads to parse " << file_count << " files" << std::endl;
 			std::chrono::steady_clock::time_point crunch_begin_time = std::chrono::steady_clock::now();
 			auto it_processed_file_counts = processed_file_counts.begin();
 			for (size_t iThread = 0; iThread < worker_thread_count; ++iThread) {
 				std::promise<std::vector<R>> promise;
 				futures.emplace_back(std::move(promise.get_future()));
-				threads.emplace_back(&Cruncher<R>::worker_func, this, m_file_entry_queues[iThread], &(*it_processed_file_counts), std::move(promise));
+				threads.emplace_back(&Cruncher<R>::worker_func, this, file_entry_queues[iThread], &(*it_processed_file_counts), std::move(promise));
 				it_processed_file_counts = std::next(it_processed_file_counts);
 			}
 
@@ -73,7 +76,7 @@ namespace Crunch {
 					int thread_processed_file_count = (*it_processed_file_counts).load();
 					it_processed_file_counts = std::next(it_processed_file_counts);
 					//int thread_processed_file_count = 0;
-					int thread_file_queue_size = m_file_entry_queues[iThread].size();
+					int thread_file_queue_size = file_entry_queues[iThread].size();
 					//float thread_progress = static_cast<float>(thread_processed_file_count) / static_cast<float>(thread_file_queue_size);
 					std::cout << "T" << iThread << ":" << thread_processed_file_count << "/" << thread_file_queue_size << " # ";
 				}
@@ -96,8 +99,6 @@ namespace Crunch {
 		}
 	private:
 		CruncherDesc<R> m_cruncher_desc;
-
-		std::vector<std::queue<std::filesystem::directory_entry>> m_file_entry_queues;
 
 		// should be floating function or not?
 		// should templated stuff be marked inline or not?
