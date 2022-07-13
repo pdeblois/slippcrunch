@@ -30,8 +30,8 @@ namespace Crunch {
 			// empty ctor, nothing to do here (m_cruncher_desc already assigned through initializer list)
 		}
 		std::vector<R> Crunch() {
-			const auto processor_count = std::thread::hardware_concurrency();
-			const auto worker_thread_count = processor_count > 2 ? processor_count - 1 : 1; // leave 1 processor free for main thread if possible
+			const size_t processor_count = std::thread::hardware_concurrency();
+			const size_t worker_thread_count = processor_count > 2 ? processor_count - 1 : 1; // leave 1 processor free for main thread if possible
 			// for processor_count, make it std::max(1, processor_count - 1)
 			// that way we can have a main thread free for printing info, if not we'll just have to live
 			// with the CPU being hogged and having slow info printing
