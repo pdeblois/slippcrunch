@@ -37,7 +37,7 @@ namespace Crunch {
 			// with the CPU being hogged and having slow info printing
 
 			std::vector<std::queue<std::filesystem::directory_entry>> file_entry_queues;
-			std::list<std::atomic_int> processed_file_counts(worker_thread_count);
+			std::vector<std::atomic_int> processed_file_counts(worker_thread_count);
 			
 			size_t iFileEntryQueue = 0;
 			for (iFileEntryQueue = 0; iFileEntryQueue < worker_thread_count; ++iFileEntryQueue) {
@@ -62,19 +62,15 @@ namespace Crunch {
 			
 			std::cout << "Starting " << worker_thread_count << " worker threads to parse " << file_count << " files" << std::endl;
 			std::chrono::steady_clock::time_point crunch_begin_time = std::chrono::steady_clock::now();
-			auto it_processed_file_counts = processed_file_counts.begin();
 			for (size_t iThread = 0; iThread < worker_thread_count; ++iThread) {
 				std::promise<std::vector<R>> promise;
 				futures.emplace_back(std::move(promise.get_future()));
-				threads.emplace_back(&Cruncher<R>::worker_func, this, file_entry_queues[iThread], &(*it_processed_file_counts), std::move(promise));
-				it_processed_file_counts = std::next(it_processed_file_counts);
+				threads.emplace_back(&Cruncher<R>::worker_func, this, file_entry_queues[iThread], &(processed_file_counts[iThread]), std::move(promise));
 			}
 
 			while (running_thread_count(&futures) > 0) {
-				it_processed_file_counts = processed_file_counts.begin();
 				for (size_t iThread = 0; iThread < worker_thread_count; ++iThread) {
-					int thread_processed_file_count = (*it_processed_file_counts).load();
-					it_processed_file_counts = std::next(it_processed_file_counts);
+					int thread_processed_file_count = (processed_file_counts[iThread]).load();
 					//int thread_processed_file_count = 0;
 					int thread_file_queue_size = file_entry_queues[iThread].size();
 					//float thread_progress = static_cast<float>(thread_processed_file_count) / static_cast<float>(thread_file_queue_size);
