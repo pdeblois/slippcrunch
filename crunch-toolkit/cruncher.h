@@ -31,55 +31,55 @@ namespace Crunch {
 		}
 		std::vector<R> Crunch() {
 			const size_t processor_count = std::thread::hardware_concurrency();
-			const size_t worker_thread_count = processor_count > 2 ? processor_count - 1 : 1; // leave 1 processor free for main thread if possible
+			const size_t worker_task_count = processor_count > 2 ? processor_count - 1 : 1; // leave 1 processor free for main thread if possible
 			
-			std::vector<std::queue<std::filesystem::directory_entry>> file_entry_queues(worker_thread_count);
-			std::vector<std::atomic_size_t> processed_file_counts(worker_thread_count);
+			std::vector<std::queue<std::filesystem::directory_entry>> file_entry_queues(worker_task_count);
+			std::vector<std::atomic_size_t> processed_file_counts(worker_task_count);
 			
 			// Setup the file queues for each thread
-			std::chrono::steady_clock::time_point file_begin_time = std::chrono::steady_clock::now();
-			size_t file_count = 0;
+			std::chrono::steady_clock::time_point files_setup_begin_time = std::chrono::steady_clock::now();
+			size_t total_file_count = 0;
 			for (const auto& file_entry : std::filesystem::recursive_directory_iterator(m_cruncher_desc.path)) {
 				bool is_file = !file_entry.is_directory() && (file_entry.is_regular_file() || file_entry.is_symlink());
 				bool is_slp_file = is_file && file_entry.path().has_extension() && file_entry.path().extension() == ".slp";
 				if (is_slp_file) {
 					std::cout << "Adding " << file_entry.path() << " to the parse queue" << std::endl;
-					file_entry_queues[file_count % worker_thread_count].push(file_entry);
-					file_count++;
+					file_entry_queues[total_file_count % worker_task_count].push(file_entry);
+					total_file_count++;
 				}
 			}
-			std::chrono::steady_clock::time_point file_end_time = std::chrono::steady_clock::now();
-			std::cout << "Added " << file_count << " files in " << std::chrono::duration_cast<std::chrono::seconds>(file_end_time - file_begin_time).count() << " seconds" << std::endl;
+			std::chrono::steady_clock::time_point files_setup_end_time = std::chrono::steady_clock::now();
+			std::cout << "Added " << total_file_count << " files in " << std::chrono::duration_cast<std::chrono::seconds>(files_setup_end_time - files_setup_begin_time).count() << " seconds" << std::endl;
 			std::cin.get();
 
 			std::vector<std::future<std::vector<R>>> futures;
 			
-			// Spawn the threads
-			std::cout << "Starting " << worker_thread_count << " worker threads to parse " << file_count << " files" << std::endl;
+			// Start the tasks
+			std::cout << "Starting " << worker_task_count << " workers to parse " << total_file_count << " files" << std::endl;
 			std::chrono::steady_clock::time_point crunch_begin_time = std::chrono::steady_clock::now();
-			for (size_t iThread = 0; iThread < worker_thread_count; ++iThread) {
-				futures.push_back(std::async(std::launch::async, &Cruncher<R>::crunch_files, this, file_entry_queues[iThread], &(processed_file_counts[iThread])));
+			for (size_t iTask = 0; iTask < worker_task_count; ++iTask) {
+				futures.push_back(std::async(std::launch::async, &Cruncher<R>::crunch_files, this, file_entry_queues[iTask], &(processed_file_counts[iTask])));
 			}
 
-			// Log the threads' progress
+			// Log the tasks' progress
 			while (!are_futures_ready(futures)) {
-				for (size_t iThread = 0; iThread < worker_thread_count; ++iThread) {
-					size_t thread_processed_file_count = (processed_file_counts[iThread]).load();
-					size_t thread_file_queue_size = file_entry_queues[iThread].size();
-					std::cout << "T" << iThread << ":" << thread_processed_file_count << "/" << thread_file_queue_size << " # ";
+				for (size_t iTask = 0; iTask < worker_task_count; ++iTask) {
+					size_t task_processed_file_count = (processed_file_counts[iTask]).load();
+					size_t task_file_queue_size = file_entry_queues[iTask].size();
+					std::cout << "T" << iTask << ":" << task_processed_file_count << "/" << task_file_queue_size << " # ";
 				}
 				std::cout << std::endl;
 				std::this_thread::sleep_for(std::chrono::milliseconds(500));
 			}
 
-			// Wait for all threads to complete their workload
+			// Wait for all tasks to complete their workload
 			for (const auto& future : futures) {
 				future.wait();
 			}
 			std::chrono::steady_clock::time_point crunch_end_time = std::chrono::steady_clock::now();
-			std::cout << "Crunched " << file_count << " files in " << std::chrono::duration_cast<std::chrono::seconds>(crunch_end_time - crunch_begin_time).count() << " seconds" << std::endl;
+			std::cout << "Crunched " << total_file_count << " files in " << std::chrono::duration_cast<std::chrono::seconds>(crunch_end_time - crunch_begin_time).count() << " seconds" << std::endl;
 
-			// Aggregate the results of each thread into a single vector of results
+			// Aggregate the results of each task into a single vector of results
 			// Each element of the returned results vector is the result of a call to crunch_func,
 			// i.e. one element of the results vector = the result of crunch_func'ing one slip::Parser/.slp replay file
 			std::vector<R> results;
