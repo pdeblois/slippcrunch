@@ -67,31 +67,16 @@ namespace slippcrunch {
 	{
 		const auto worker_count = std::clamp<size_t>(std::thread::hardware_concurrency() - 1, 1, max_worker_count); // leave 1 processor free for main thread if possible
 
-		// Setup the file queues for each thread
+		// Setup the arguments to be passed to the workers
 		std::vector<std::mutex> file_entry_queue_mutexes(worker_count);
 		std::vector<std::queue<std::filesystem::directory_entry>> file_entry_queues(worker_count);
 		std::vector<std::atomic_size_t> processed_file_counts(worker_count);
 		for (auto& element : processed_file_counts) { element.store(0); }
 		std::vector<std::atomic_bool> file_traversal_done_flags(worker_count);
 		for (auto& element : file_traversal_done_flags) { element.store(false); }
-		size_t total_file_count = 0;
-		std::chrono::steady_clock::time_point file_traversal_begin_time = std::chrono::steady_clock::now();
-		for (const auto& file_entry : std::filesystem::recursive_directory_iterator(path)) {
-			bool is_file = !file_entry.is_directory() && (file_entry.is_regular_file() || file_entry.is_symlink());
-			bool is_slp_file = is_file && file_entry.path().has_extension() && file_entry.path().extension() == ".slp";
-			if (is_slp_file) {
-				std::cout << "Adding " << file_entry.path() << " to the parse queue" << std::endl;
-				file_entry_queues[total_file_count % worker_count].push(file_entry);
-				total_file_count++;
-			}
-		}
-		std::chrono::steady_clock::time_point file_traversal_end_time = std::chrono::steady_clock::now();
-		for (auto& element : file_traversal_done_flags) { element.store(true); }
-		std::cout << "Added " << total_file_count << " files in " << std::chrono::duration_cast<std::chrono::seconds>(file_traversal_end_time - file_traversal_begin_time).count() << " seconds" << std::endl;
-		std::cin.get();
-
+		
 		// Start the tasks
-		std::cout << "Starting " << worker_count << " workers to parse " << total_file_count << " files" << std::endl;
+		std::cout << "Starting " << worker_count << " workers to parse " /* << total_file_count << " files" */ << std::endl;
 		std::vector<std::future<std::vector<R>>> futures;
 		std::chrono::steady_clock::time_point crunch_begin_time = std::chrono::steady_clock::now();
 		for (size_t iWorker = 0; iWorker < worker_count; ++iWorker) {
@@ -105,6 +90,22 @@ namespace slippcrunch {
 				&(file_traversal_done_flags[iWorker])
 			));
 		}
+
+		// Fill the file entry queues
+		size_t total_file_count = 0;
+		std::chrono::steady_clock::time_point file_traversal_begin_time = std::chrono::steady_clock::now();
+		for (const auto& file_entry : std::filesystem::recursive_directory_iterator(path)) {
+			bool is_file = !file_entry.is_directory() && (file_entry.is_regular_file() || file_entry.is_symlink());
+			bool is_slp_file = is_file && file_entry.path().has_extension() && file_entry.path().extension() == ".slp";
+			if (is_slp_file) {
+				size_t iWorker = total_file_count % worker_count;
+				std::lock_guard file_entry_queue_lock(file_entry_queue_mutexes[iWorker]);
+				file_entry_queues[iWorker].push(file_entry);
+				total_file_count++;
+			}
+		}
+		std::chrono::steady_clock::time_point file_traversal_end_time = std::chrono::steady_clock::now();
+		for (auto& element : file_traversal_done_flags) { element.store(true); }
 
 		// Log the tasks' progress
 		while (!are_futures_ready<std::vector<R>>(futures)) {
