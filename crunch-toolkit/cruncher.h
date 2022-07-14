@@ -5,38 +5,6 @@
 namespace slippcrunch {
 	template<typename R>
 	class crunch {
-	private:
-		static std::vector<R> worker_func
-		(
-			R(*crunch_func)(std::unique_ptr<slip::Parser>),
-			std::queue<std::filesystem::directory_entry> file_entry_queue,
-			std::atomic_size_t* processed_file_count
-		)
-		{
-			std::vector<R> results;
-			while (!file_entry_queue.empty()) {
-				std::unique_ptr<slip::Parser> parser = std::make_unique<slip::Parser>(0);
-				bool did_parse = parser->load(file_entry_queue.front().path().string().c_str());
-				if (did_parse) {
-					R crunch_func_result = crunch_func(std::move(parser));
-					results.push_back(crunch_func_result);
-					processed_file_count->store(processed_file_count->load() + 1);
-					file_entry_queue.pop();
-				}
-			}
-			return results;
-		}
-
-		static bool are_futures_ready(const std::vector<std::future<std::vector<R>>>& futures) {
-			for (const auto& future : futures) {
-				auto future_status = future.wait_for(std::chrono::milliseconds::zero());
-				if (future_status != std::future_status::ready) {
-					return false;
-				}
-			}
-			return true;
-		}
-
 	public:
 		static std::vector<R> execute
 		(
@@ -112,6 +80,38 @@ namespace slippcrunch {
 				crunch_results.push_back(future_results[worker_index][worker_offset]);
 			}
 			return crunch_results;
+		}
+
+	private:
+		static std::vector<R> worker_func
+		(
+			R(*crunch_func)(std::unique_ptr<slip::Parser>),
+			std::queue<std::filesystem::directory_entry> file_entry_queue,
+			std::atomic_size_t* processed_file_count
+		)
+		{
+			std::vector<R> results;
+			while (!file_entry_queue.empty()) {
+				std::unique_ptr<slip::Parser> parser = std::make_unique<slip::Parser>(0);
+				bool did_parse = parser->load(file_entry_queue.front().path().string().c_str());
+				if (did_parse) {
+					R crunch_func_result = crunch_func(std::move(parser));
+					results.push_back(crunch_func_result);
+					processed_file_count->store(processed_file_count->load() + 1);
+					file_entry_queue.pop();
+				}
+			}
+			return results;
+		}
+
+		static bool are_futures_ready(const std::vector<std::future<std::vector<R>>>& futures) {
+			for (const auto& future : futures) {
+				auto future_status = future.wait_for(std::chrono::milliseconds::zero());
+				if (future_status != std::future_status::ready) {
+					return false;
+				}
+			}
+			return true;
 		}
 	};
 }
