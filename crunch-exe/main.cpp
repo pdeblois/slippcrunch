@@ -53,7 +53,7 @@ int main() {
 	try {
 		std::cout << "Press enter to start the crunch : ";
 		std::cin.get();
-		std::vector<std::vector<slippcrunch::Combo>> crunch_results = slippcrunch::crunch<std::vector<slippcrunch::Combo>>(find_combos_from_parser, std::filesystem::current_path());
+		std::vector<std::vector<slippcrunch::Combo>> crunch_results = slippcrunch::crunch<std::vector<slippcrunch::Combo>>::execute(find_combos_from_parser, std::filesystem::current_path());
 		size_t combo_count = 0;
 		for (const auto& crunch_result : crunch_results) {
 			combo_count += crunch_result.size();
