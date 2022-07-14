@@ -204,7 +204,7 @@
     <ClInclude Include="..\slippc\include\shiftjis.h" />
     <ClInclude Include="..\slippc\include\util.h" />
     <ClInclude Include="combo.h" />
-    <ClInclude Include="cruncher.h" />
+    <ClInclude Include="crunch.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>

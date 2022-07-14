@@ -29,7 +29,7 @@
     <ClInclude Include="..\crunch-toolkit\combo.h">
       <Filter>Header Files\crunch-toolkit</Filter>
     </ClInclude>
-    <ClInclude Include="..\crunch-toolkit\cruncher.h">
+    <ClInclude Include="..\crunch-toolkit\crunch.h">
       <Filter>Header Files\crunch-toolkit</Filter>
     </ClInclude>
     <ClInclude Include="..\slippc\include\analysis.h">

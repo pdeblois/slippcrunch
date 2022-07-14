@@ -6,7 +6,7 @@
 #include "parser.h"
 #include "analysis.h"
 
-#include "cruncher.h"
+#include "crunch.h"
 #include "combo.h"
 
 bool is_combo_valid(const slippcrunch::Combo& combo) {

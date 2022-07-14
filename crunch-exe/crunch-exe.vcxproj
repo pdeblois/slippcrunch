@@ -167,7 +167,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\crunch-toolkit\combo.h" />
-    <ClInclude Include="..\crunch-toolkit\cruncher.h" />
+    <ClInclude Include="..\crunch-toolkit\crunch.h" />
     <ClInclude Include="..\slippc\include\analysis.h" />
     <ClInclude Include="..\slippc\include\analyzer.h" />
     <ClInclude Include="..\slippc\include\compressor.h" />

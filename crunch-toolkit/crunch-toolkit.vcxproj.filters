@@ -60,7 +60,7 @@
     <ClInclude Include="combo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="cruncher.h">
+    <ClInclude Include="crunch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
