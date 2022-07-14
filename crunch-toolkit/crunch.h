@@ -9,7 +9,7 @@ namespace slippcrunch {
 		static std::vector<R> execute
 		(
 			R(*crunch_func)(std::unique_ptr<slip::Parser>),
-			std::filesystem::path path,
+			std::filesystem::path path = std::filesystem::current_path(),
 			bool is_recursive = false,
 			size_t max_worker_count = std::thread::hardware_concurrency() - 1
 		)

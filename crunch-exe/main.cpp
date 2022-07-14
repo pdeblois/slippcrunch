@@ -49,11 +49,16 @@ std::vector<slippcrunch::Combo> find_combos_from_replay_filename(std::string rep
 	return find_combos_from_parser(std::move(parser));
 }
 
+size_t do_nothing_with_parser(std::unique_ptr<slip::Parser> parser) {
+	return 1;
+}
+
 int main() {
 	try {
 		std::cout << "Press enter to start the crunch : ";
 		std::cin.get();
-		std::vector<std::vector<slippcrunch::Combo>> crunch_results = slippcrunch::crunch<std::vector<slippcrunch::Combo>>::execute(find_combos_from_parser, std::filesystem::current_path());
+		std::vector<std::vector<slippcrunch::Combo>> crunch_results = slippcrunch::crunch<std::vector<slippcrunch::Combo>>::execute(find_combos_from_parser);
+		//std::vector<size_t> results = slippcrunch::crunch<size_t>::execute(do_nothing_with_parser);
 		size_t combo_count = 0;
 		for (const auto& crunch_result : crunch_results) {
 			combo_count += crunch_result.size();
