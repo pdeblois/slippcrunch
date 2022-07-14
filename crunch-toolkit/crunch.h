@@ -71,7 +71,7 @@ namespace slippcrunch {
 			// The results are in order of how the files were iterated by the std::filesystem::recursive_directory_iterator
 			std::vector<std::vector<R>> future_results;
 			for (auto& future : futures) {
-				future_results.push_back(std::move(future.get()));
+				future_results.push_back(future.get());
 			}
 			std::vector<R> crunch_results;
 			for (size_t iFileEntry = 0; iFileEntry < total_file_count; ++iFileEntry) {
