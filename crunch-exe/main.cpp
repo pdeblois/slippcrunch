@@ -9,17 +9,17 @@
 #include "cruncher.h"
 #include "combo.h"
 
-bool is_combo_valid(const Crunch::Combo& combo) {
+bool is_combo_valid(const slippcrunch::Combo& combo) {
 	return combo.DidKill() && combo.TotalMoveCount() >= 7 && combo.TotalDamage() >= 60 && !combo.ExceedsSingleAttackDamageRatioThreshold(0.25f);
 }
 
-std::vector<Crunch::Combo> find_combos_from_analysis(const slip::Analysis& analysis) {
-	std::vector<Crunch::Combo> combos;
+std::vector<slippcrunch::Combo> find_combos_from_analysis(const slip::Analysis& analysis) {
+	std::vector<slippcrunch::Combo> combos;
 
 	int port_to_use = analysis.ap[0].tag_code == "YOYO#278" ? 0 : 1;
 	const slip::AnalysisPlayer& player_analysis = analysis.ap[port_to_use];
 
-	Crunch::Combo curr_combo;
+	slippcrunch::Combo curr_combo;
 	for (size_t iAttack = 0; player_analysis.attacks[iAttack].frame > 0; ++iAttack) {
 		const slip::Attack& curr_attack = player_analysis.attacks[iAttack];
 		const slip::Punish& curr_punish = player_analysis.punishes[curr_attack.punish_id];
@@ -38,12 +38,12 @@ std::vector<Crunch::Combo> find_combos_from_analysis(const slip::Analysis& analy
 	return combos;
 }
 
-std::vector<Crunch::Combo> find_combos_from_parser(std::unique_ptr<slip::Parser> parser) {
+std::vector<slippcrunch::Combo> find_combos_from_parser(std::unique_ptr<slip::Parser> parser) {
 	std::unique_ptr<slip::Analysis> analysis(parser->analyze());
 	return find_combos_from_analysis(*analysis);
 }
 
-std::vector<Crunch::Combo> find_combos_from_replay_filename(std::string replay_filename) {
+std::vector<slippcrunch::Combo> find_combos_from_replay_filename(std::string replay_filename) {
 	std::unique_ptr<slip::Parser> parser = std::make_unique<slip::Parser>(0);
 	parser->load(replay_filename.c_str());
 	return find_combos_from_parser(std::move(parser));
@@ -51,13 +51,9 @@ std::vector<Crunch::Combo> find_combos_from_replay_filename(std::string replay_f
 
 int main() {
 	try {
-		Crunch::CruncherDesc<std::vector<Crunch::Combo>> cruncher_desc;
-		cruncher_desc.crunch_func = find_combos_from_parser;
-		cruncher_desc.path = std::filesystem::current_path();
-		Crunch::Cruncher<std::vector<Crunch::Combo>> cruncher(cruncher_desc);
 		std::cout << "Press enter to start the crunch : ";
 		std::cin.get();
-		std::vector<std::vector<Crunch::Combo>> crunch_results = cruncher.Crunch();
+		std::vector<std::vector<slippcrunch::Combo>> crunch_results = slippcrunch::crunch<std::vector<slippcrunch::Combo>>(find_combos_from_parser, std::filesystem::current_path());
 		size_t combo_count = 0;
 		for (const auto& crunch_result : crunch_results) {
 			combo_count += crunch_result.size();

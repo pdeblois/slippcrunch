@@ -2,7 +2,7 @@
 
 #include "pch.h"
 
-namespace Crunch {
+namespace slippcrunch {
 	constexpr uint8_t COMBO_INTRO_FRAMES = 60;
 	constexpr uint8_t COMBO_OUTRO_FRAMES = 60;
 	struct Combo {

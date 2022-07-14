@@ -3,7 +3,7 @@
 
 #include "combo.h"
 
-namespace Crunch {
+namespace slippcrunch {
 	bool Combo::DidKill() const { 
 		return Dir::NEUT < punish.kill_dir && punish.kill_dir < Dir::__LAST; 
 	}
