@@ -81,13 +81,19 @@ namespace Crunch {
 
 			// Aggregate the results of each task into a single vector of results
 			// Each element of the returned results vector is the result of a call to crunch_func,
-			// i.e. one element of the results vector = the result of crunch_func'ing one slip::Parser/.slp replay file
-			std::vector<R> results;
+			// i.e. one element of crunch_results = the returned value of crunch_func'ing one slip::Parser/.slp replay file
+			// The results are in order of how the files were iterated by the std::filesystem::recursive_directory_iterator
+			std::vector<std::vector<R>> future_results;
 			for (auto& future : futures) {
-				auto future_result = future.get();
-				results.insert(results.end(), future_result.begin(), future_result.end());
+				future_results.push_back(std::move(future.get()));
 			}
-			return results;
+			std::vector<R> crunch_results;
+			for (size_t iFileEntry = 0; iFileEntry < total_file_count; ++iFileEntry) {
+				size_t task_index = iFileEntry % worker_task_count;
+				size_t task_offset = iFileEntry / worker_task_count;
+				crunch_results.push_back(future_results[task_index][task_offset]);
+			}
+			return crunch_results;
 		}
 	private:
 		CruncherDesc<R> m_cruncher_desc;
