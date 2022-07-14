@@ -93,8 +93,8 @@ namespace slippcrunch {
 			std::vector<R> results;
 			while (!file_entry_queue.empty()) {
 				std::unique_ptr<slip::Parser> parser = std::make_unique<slip::Parser>(0);
-				bool did_parse = parser->load(file_entry_queue.front().path().string().c_str());
-				if (did_parse) {
+				bool was_parsing_successful = parser->load(file_entry_queue.front().path().string().c_str());
+				if (was_parsing_successful) {
 					R crunch_func_result = crunch_func(std::move(parser));
 					results.push_back(crunch_func_result);
 					processed_file_count->store(processed_file_count->load() + 1);
