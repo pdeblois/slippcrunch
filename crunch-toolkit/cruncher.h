@@ -33,12 +33,11 @@ namespace Crunch {
 			const size_t processor_count = std::thread::hardware_concurrency();
 			const size_t worker_task_count = processor_count > 2 ? processor_count - 1 : 1; // leave 1 processor free for main thread if possible
 			
+			// Setup the file queues for each thread
 			std::vector<std::queue<std::filesystem::directory_entry>> file_entry_queues(worker_task_count);
 			std::vector<std::atomic_size_t> processed_file_counts(worker_task_count);
-			
-			// Setup the file queues for each thread
-			std::chrono::steady_clock::time_point files_setup_begin_time = std::chrono::steady_clock::now();
 			size_t total_file_count = 0;
+			std::chrono::steady_clock::time_point files_setup_begin_time = std::chrono::steady_clock::now();
 			for (const auto& file_entry : std::filesystem::recursive_directory_iterator(m_cruncher_desc.path)) {
 				bool is_file = !file_entry.is_directory() && (file_entry.is_regular_file() || file_entry.is_symlink());
 				bool is_slp_file = is_file && file_entry.path().has_extension() && file_entry.path().extension() == ".slp";
@@ -52,10 +51,9 @@ namespace Crunch {
 			std::cout << "Added " << total_file_count << " files in " << std::chrono::duration_cast<std::chrono::seconds>(files_setup_end_time - files_setup_begin_time).count() << " seconds" << std::endl;
 			std::cin.get();
 
-			std::vector<std::future<std::vector<R>>> futures;
-			
 			// Start the tasks
 			std::cout << "Starting " << worker_task_count << " workers to parse " << total_file_count << " files" << std::endl;
+			std::vector<std::future<std::vector<R>>> futures;
 			std::chrono::steady_clock::time_point crunch_begin_time = std::chrono::steady_clock::now();
 			for (size_t iTask = 0; iTask < worker_task_count; ++iTask) {
 				futures.push_back(std::async(std::launch::async, &Cruncher<R>::crunch_files, this, file_entry_queues[iTask], &(processed_file_counts[iTask])));
