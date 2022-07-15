@@ -21,6 +21,7 @@
 #include <filesystem>
 #include <queue>
 #include <optional>
+#include <iostream>
 
 //slippc
 #include "analysis.h"
