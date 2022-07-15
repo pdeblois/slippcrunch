@@ -42,13 +42,13 @@ namespace slippcrunch {
 	template<typename R>
 	class crunch {
 	public:
-		static std::vector<R> crunch_directory(const crunch_params<R>& args, std::filesystem::path directory = std::filesystem::current_path(), bool is_recursive = false) {
+		static std::vector<R> crunch_directory(const crunch_params<R>& args, const std::filesystem::path& directory = std::filesystem::current_path(), bool is_recursive = false) {
 			std::vector<std::filesystem::directory_entry> file_entries;
-			for (const auto& directory_entry : std::filesystem::recursive_directory_iterator(directory)) {
+			for (auto& directory_entry : std::filesystem::recursive_directory_iterator(directory)) {
 				bool is_file = !directory_entry.is_directory() && (directory_entry.is_regular_file() || directory_entry.is_symlink());
 				bool is_slp_file = is_file && directory_entry.path().has_extension() && directory_entry.path().extension() == ".slp";
 				if (is_slp_file) {
-					file_entries.push_back(directory_entry);
+					file_entries.push_back(std::move(directory_entry));
 				}
 			}
 			return crunch_files(args, file_entries);
