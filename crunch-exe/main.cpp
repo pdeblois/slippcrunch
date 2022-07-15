@@ -53,13 +53,24 @@ size_t do_nothing_with_parser(std::unique_ptr<slip::Parser> parser) {
 	return 1;
 }
 
+void log_progress(const std::vector<size_t>& processed_file_counts, const std::vector<size_t>& file_queue_sizes) {
+	size_t worker_count = processed_file_counts.size() && file_queue_sizes.size() ? processed_file_counts.size() : 0;
+	if (worker_count > 0) {
+		for (size_t iWorker = 0; iWorker < worker_count; ++iWorker) {
+			std::cout << "T" << iWorker << ":" << processed_file_counts[iWorker] << "/" << file_queue_sizes[iWorker] << " # ";
+		}
+		std::cout << std::endl;
+	}
+}
+
 int main() {
 	try {
 		std::cout << "Press enter to start the crunch : ";
 		std::cin.get();
-		slippcrunch::crunch_desc<std::vector<slippcrunch::Combo>> crunch_args;
+		slippcrunch::crunch_params<std::vector<slippcrunch::Combo>> crunch_args;
 		crunch_args.crunch_func = find_combos_from_parser;
-		std::vector<std::vector<slippcrunch::Combo>> crunch_results = slippcrunch::crunch<std::vector<slippcrunch::Combo>>::execute(crunch_args);
+		crunch_args.progress_report_func = log_progress;
+		std::vector<std::vector<slippcrunch::Combo>> crunch_results = slippcrunch::crunch<std::vector<slippcrunch::Combo>>::crunch_directory(crunch_args);
 		//std::vector<size_t> results = slippcrunch::crunch<size_t>::execute(do_nothing_with_parser);
 		size_t combo_count = 0;
 		for (const auto& crunch_result : crunch_results) {

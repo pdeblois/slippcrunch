@@ -3,25 +3,58 @@
 #include "pch.h"
 
 namespace slippcrunch {
+	template<typename R>
+	struct crunch_params {
+		// The per-file processing function (processes one replay/parser). This is the core of what crunching is about.
+		R(*crunch_func)(std::unique_ptr<slip::Parser> parser) = nullptr;
+		
+		// The function to call to report the workers' progress
+		void(*progress_report_func)(const std::vector<size_t>& processed_file_counts, const std::vector<size_t>& file_queue_sizes) = nullptr;
+		// The time interval between each call to the progress report function
+		std::chrono::milliseconds progress_report_interval = std::chrono::milliseconds(500);
+
+		// How many workers to start (i.e. threads). Will be clamped between [1,std::thread::hardware_concurrency()] (inclusive).
+		// By default, leaves one core free for the calling thread.
+		size_t desired_worker_count = std::thread::hardware_concurrency() - 1; // by default, leave a core for the calling thread to perform its progress report routine
+	};
+	
 	// This struct serves as a parameter list to be passed to the crunch::execute function.
 	// It can be reused for multiple crunch::execute calls, as crunch::execute does not modify any members of the struct
 	// (it can write to the log_output however)
-	template<typename R>
-	struct crunch_desc {
-		R(*crunch_func)(std::unique_ptr<slip::Parser>);
-		std::filesystem::path path = std::filesystem::current_path();
-		bool is_recursive = false;
-		std::ostream* log_output = &std::cout;
-		size_t desired_worker_count = std::thread::hardware_concurrency() - 1; // by default, leave a core for the calling thread to perform its progress report routine
-	};
+	//template<typename R>
+	//struct crunch_directory_params {
+	//	// Callbacks
+	//	R(*crunch_func)(std::unique_ptr<slip::Parser> parser) = nullptr; // the per-file processing function (processes one replay/parser)
+	//	//void(*directory_traversal_done_func)(size_t total_file_count) = nullptr;
+	//	void(*progress_report_func)(const std::vector<size_t>& processed_file_counts, const std::vector<size_t>& file_queue_sizes) = nullptr;
+	//	//void(*crunch_done_func)(size_t total_files_parsed_count, std::chrono::steady_clock::time_point start_time, std::chrono::steady_clock::time_point end_time) = nullptr;
+
+	//	// Directory traversal settings
+	//	std::filesystem::path directory_path = std::filesystem::current_path();
+	//	bool is_recursive = false;
+
+	//	// Performance settings
+	//	size_t desired_worker_count = std::thread::hardware_concurrency() - 1; // by default, leave a core for the calling thread to perform its progress report routine
+	//};
 
 	// The crunch class only serves the purpose of managing the access specifiers of functions,
 	// which is why all its methods are statics. This is used to determine what is exposed in the public API.
 	template<typename R>
 	class crunch {
 	public:
-		static std::vector<R> execute(const crunch_desc<R>& args)
-		{
+		static std::vector<R> crunch_directory(const crunch_params<R>& args, std::filesystem::path directory = std::filesystem::current_path(), bool is_recursive = false) {
+			std::vector<std::filesystem::directory_entry> file_entries;
+			for (const auto& directory_entry : std::filesystem::recursive_directory_iterator(directory)) {
+				bool is_file = !directory_entry.is_directory() && (directory_entry.is_regular_file() || directory_entry.is_symlink());
+				bool is_slp_file = is_file && directory_entry.path().has_extension() && directory_entry.path().extension() == ".slp";
+				if (is_slp_file) {
+					file_entries.push_back(directory_entry);
+				}
+			}
+			return crunch_files(args, file_entries);
+		}
+
+		static std::vector<R> crunch_files(const crunch_params<R>& args, std::vector<std::filesystem::directory_entry> files) {
 			const size_t worker_count = std::clamp<size_t>(args.desired_worker_count, 1, std::thread::hardware_concurrency());
 
 			// Setup the file queues for each thread
@@ -29,7 +62,7 @@ namespace slippcrunch {
 			std::vector<std::atomic_size_t> processed_file_counts(worker_count);
 			size_t total_file_count = 0;
 			std::chrono::steady_clock::time_point file_traversal_begin_time = std::chrono::steady_clock::now();
-			for (const auto& file_entry : std::filesystem::recursive_directory_iterator(args.path)) {
+			for (const auto& file_entry : files) {
 				bool is_file = !file_entry.is_directory() && (file_entry.is_regular_file() || file_entry.is_symlink());
 				bool is_slp_file = is_file && file_entry.path().has_extension() && file_entry.path().extension() == ".slp";
 				if (is_slp_file) {
