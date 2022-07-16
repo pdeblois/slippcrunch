@@ -10,7 +10,7 @@
 #include "combo.h"
 
 bool is_combo_valid(const slippcrunch::Combo& combo) {
-	return combo.DidKill() && combo.TotalMoveCount() >= 7 && combo.TotalDamage() >= 60 && !combo.ExceedsSingleAttackDamageRatioThreshold(0.25f);
+	return combo.DidKill() && combo.TotalMoveCount() >= 7 && combo.TotalDamage() >= 60 && combo.HighestSingleAttackDamageRatio() <= 0.25f;
 }
 
 std::vector<slippcrunch::Combo> find_combos_from_analysis(const slip::Analysis& analysis) {

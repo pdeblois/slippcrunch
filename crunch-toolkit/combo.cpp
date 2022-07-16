@@ -45,10 +45,6 @@ namespace slippcrunch {
 		return ratio;
 	}
 
-	bool Combo::ExceedsSingleAttackDamageRatioThreshold(float damage_ratio_threshold) const {
-		return HighestSingleAttackDamageRatio() > damage_ratio_threshold;
-	}
-
 	int Combo::MovieStartFrame() const { 
 		return punish.start_frame - COMBO_INTRO_FRAMES; 
 	}

@@ -15,7 +15,6 @@ namespace slippcrunch {
 		uint16_t HighestSingleAttackDamage() const;
 		uint16_t TotalDamage() const;
 		float HighestSingleAttackDamageRatio() const;
-		bool ExceedsSingleAttackDamageRatioThreshold(float damage_ratio_threshold) const;
 		int MovieStartFrame() const;
 		int MovieEndFrame() const;
 		int Score() const;
