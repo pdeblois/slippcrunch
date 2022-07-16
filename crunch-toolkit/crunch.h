@@ -61,7 +61,6 @@ namespace slippcrunch {
 			std::vector<std::queue<std::filesystem::directory_entry>> file_entry_queues(worker_count);
 			std::vector<std::atomic_size_t> processed_file_counts(worker_count);
 			size_t total_file_count = 0;
-			std::chrono::steady_clock::time_point file_traversal_begin_time = std::chrono::steady_clock::now();
 			for (auto& file_entry : files) {
 				bool is_file = !file_entry.is_directory() && (file_entry.is_regular_file() || file_entry.is_symlink());
 				bool is_slp_file = is_file && file_entry.path().has_extension() && file_entry.path().extension() == ".slp";
@@ -70,14 +69,9 @@ namespace slippcrunch {
 					total_file_count++;
 				}
 			}
-			std::chrono::steady_clock::time_point file_traversal_end_time = std::chrono::steady_clock::now();
-			std::cout << "Found " << total_file_count << " files in " << std::chrono::duration_cast<std::chrono::seconds>(file_traversal_end_time - file_traversal_begin_time).count() << " seconds" << std::endl;
-			std::cin.get();
 
 			// Start the workers
-			std::cout << "Starting " << worker_count << " workers to parse " << total_file_count << " files" << std::endl;
 			std::vector<std::future<std::vector<R>>> futures;
-			std::chrono::steady_clock::time_point crunch_begin_time = std::chrono::steady_clock::now();
 			for (size_t iWorker = 0; iWorker < worker_count; ++iWorker) {
 				futures.push_back(std::async(
 					std::launch::async,
@@ -104,8 +98,6 @@ namespace slippcrunch {
 			for (const auto& future : futures) {
 				future.wait();
 			}
-			std::chrono::steady_clock::time_point crunch_end_time = std::chrono::steady_clock::now();
-			std::cout << "Crunched " << total_file_count << " files in " << std::chrono::duration_cast<std::chrono::seconds>(crunch_end_time - crunch_begin_time).count() << " seconds" << std::endl;
 
 			// Aggregate the results of each task into a single vector of results
 			// Each element of the returned results vector is the result of a call to crunch_func,

@@ -55,6 +55,7 @@ size_t do_nothing_with_parser(std::unique_ptr<slip::Parser> parser) {
 
 void log_progress(size_t processed_file_count, size_t total_file_count) {
 	const static std::string loading_symbols[] = { "-", "\\", "|", "/" };
+	const uint8_t loading_symbols_length = 4;
 	static uint8_t iLoadingSymbol = 0;
 
 	float progress = static_cast<float>(processed_file_count) / static_cast<float>(total_file_count);
@@ -67,9 +68,9 @@ void log_progress(size_t processed_file_count, size_t total_file_count) {
 	std::string arrow_indicator(hollow_indicator_count > 0 ? 1 : 0, '>');
 	std::string hollow_indicators(hollow_indicator_count > 0 ? hollow_indicator_count - 1 : 0, ' ');
 	
-	std::cout << loading_symbols[++iLoadingSymbol % 4] << " Crunching...";
+	std::cout << loading_symbols[++iLoadingSymbol % loading_symbols_length] << " Crunching...";
 	std::cout << " [" << filled_indicators << arrow_indicator << hollow_indicators << "] ";
-	std::cout << std::floor(progress * 100) << "\%" << " " << "(" << processed_file_count << "/" << total_file_count << " " << "files" << ")";
+	std::cout << std::floor(progress * 100) << "\% (" << processed_file_count << "/" << total_file_count << " files)";
 	std::cout << std::endl;
 }
 
@@ -77,11 +78,18 @@ int main() {
 	try {
 		std::cout << "Press enter to start the crunch...";
 		std::cin.get();
+		
 		slippcrunch::crunch_params<std::vector<slippcrunch::Combo>> crunch_args;
 		crunch_args.crunch_func = find_combos_from_parser;
 		crunch_args.progress_report_func = log_progress;
+		
+		std::chrono::steady_clock::time_point crunch_start_time = std::chrono::steady_clock::now();
 		std::vector<std::vector<slippcrunch::Combo>> crunch_results = slippcrunch::crunch<std::vector<slippcrunch::Combo>>::crunch_directory(crunch_args);
-		//std::vector<size_t> results = slippcrunch::crunch<size_t>::execute(do_nothing_with_parser);
+		std::chrono::steady_clock::time_point crunch_end_time = std::chrono::steady_clock::now();
+		
+		auto crunch_duration = std::chrono::duration_cast<std::chrono::seconds>(crunch_end_time - crunch_start_time);
+		std::cout << "Crunched " << crunch_results.size() << " files in " << crunch_duration.count() << " seconds" << std::endl;
+		
 		size_t combo_count = 0;
 		for (const auto& crunch_result : crunch_results) {
 			combo_count += crunch_result.size();
