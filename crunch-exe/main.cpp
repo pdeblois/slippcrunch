@@ -58,8 +58,8 @@ void log_progress(size_t processed_file_count, size_t total_file_count) {
 		return;
 	}
 
-	const static std::string loading_symbols[] = { "-", "\\", "|", "/" };
-	const uint8_t loading_symbols_length = 4;
+	static const std::string loading_symbols[] = { "-", "\\", "|", "/" };
+	constexpr uint8_t loading_symbols_length = 4;
 	static uint8_t iLoadingSymbol = 0;
 
 	float progress = static_cast<float>(processed_file_count) / static_cast<float>(total_file_count);
