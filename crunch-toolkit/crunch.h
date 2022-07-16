@@ -118,7 +118,7 @@ namespace slippcrunch {
 				bool was_parsing_successful = parser->load(file_entry_queue->front().path().string().c_str());
 				if (was_parsing_successful) {
 					R crunch_func_result = crunch_func(std::move(parser));
-					results.push_back(crunch_func_result);
+					results.push_back(std::move(crunch_func_result));
 					processed_file_count->store(processed_file_count->load() + 1);
 					file_entry_queue->pop();
 				}
