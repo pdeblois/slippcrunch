@@ -1,4 +1,4 @@
-// crunch-exe.cpp : This file contains the 'main' function. Program execution begins and ends there.
+﻿// crunch-exe.cpp : This file contains the 'main' function. Program execution begins and ends there.
 //
 
 #include <iostream>
@@ -53,19 +53,29 @@ size_t do_nothing_with_parser(std::unique_ptr<slip::Parser> parser) {
 	return 1;
 }
 
-void log_progress(const std::vector<size_t>& processed_file_counts, const std::vector<size_t>& file_queue_sizes) {
-	size_t worker_count = processed_file_counts.size() && file_queue_sizes.size() ? processed_file_counts.size() : 0;
-	if (worker_count > 0) {
-		for (size_t iWorker = 0; iWorker < worker_count; ++iWorker) {
-			std::cout << "T" << iWorker << ":" << processed_file_counts[iWorker] << "/" << file_queue_sizes[iWorker] << " # ";
-		}
-		std::cout << std::endl;
-	}
+void log_progress(size_t processed_file_count, size_t total_file_count) {
+	const static std::string loading_symbols[] = { "-", "\\", "|", "/" };
+	static uint8_t iLoadingSymbol = 0;
+
+	float progress = static_cast<float>(processed_file_count) / static_cast<float>(total_file_count);
+	
+	static const uint8_t total_indicator_count = 50;
+	uint8_t filled_indicator_count = std::floor(progress * total_indicator_count);
+	uint8_t hollow_indicator_count = total_indicator_count - filled_indicator_count;
+	
+	std::string filled_indicators(filled_indicator_count, '-');
+	std::string arrow_indicator(hollow_indicator_count > 0 ? 1 : 0, '>');
+	std::string hollow_indicators(hollow_indicator_count > 0 ? hollow_indicator_count - 1 : 0, ' ');
+	
+	std::cout << loading_symbols[++iLoadingSymbol % 4] << " Crunching...";
+	std::cout << " [" << filled_indicators << arrow_indicator << hollow_indicators << "] ";
+	std::cout << std::floor(progress * 100) << "\%" << " " << "(" << processed_file_count << "/" << total_file_count << " " << "files" << ")";
+	std::cout << std::endl;
 }
 
 int main() {
 	try {
-		std::cout << "Press enter to start the crunch : ";
+		std::cout << "Press enter to start the crunch...";
 		std::cin.get();
 		slippcrunch::crunch_params<std::vector<slippcrunch::Combo>> crunch_args;
 		crunch_args.crunch_func = find_combos_from_parser;
