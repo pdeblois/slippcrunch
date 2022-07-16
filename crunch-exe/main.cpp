@@ -27,7 +27,7 @@ std::vector<slippcrunch::Combo> find_combos_from_analysis(const slip::Analysis& 
 		if (!curr_combo.attacks.empty() && curr_attack.punish_id != curr_combo.attacks.back().punish_id) {
 			curr_combo.punish = player_analysis.punishes[curr_combo.attacks.back().punish_id];
 			if (is_combo_valid(curr_combo)) {
-				combos.push_back(curr_combo);
+				combos.push_back(std::move(curr_combo));
 			}
 			curr_combo = {};
 		}
