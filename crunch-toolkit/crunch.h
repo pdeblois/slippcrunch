@@ -3,6 +3,8 @@
 #include "pch.h"
 
 namespace slippcrunch {
+	// This struct serves as part of the parameter list of a crunch function.
+	// It can be reused for multiple crunch calls, as it is passed by value.
 	template<typename R>
 	struct crunch_params {
 		// The per-file processing function (processes one replay/parser). This is the core of what crunching is about.
@@ -17,25 +19,6 @@ namespace slippcrunch {
 		// By default, leaves one core free for the calling thread.
 		size_t desired_worker_count = std::thread::hardware_concurrency() - 1; // by default, leave a core for the calling thread to perform its progress report routine
 	};
-	
-	// This struct serves as a parameter list to be passed to the crunch::execute function.
-	// It can be reused for multiple crunch::execute calls, as crunch::execute does not modify any members of the struct
-	// (it can write to the log_output however)
-	//template<typename R>
-	//struct crunch_directory_params {
-	//	// Callbacks
-	//	R(*crunch_func)(std::unique_ptr<slip::Parser> parser) = nullptr; // the per-file processing function (processes one replay/parser)
-	//	//void(*directory_traversal_done_func)(size_t total_file_count) = nullptr;
-	//	void(*progress_report_func)(const std::vector<size_t>& worker_processed_file_counts, const std::vector<size_t>& file_queue_sizes) = nullptr;
-	//	//void(*crunch_done_func)(size_t total_files_parsed_count, std::chrono::steady_clock::time_point start_time, std::chrono::steady_clock::time_point end_time) = nullptr;
-
-	//	// Directory traversal settings
-	//	std::filesystem::path directory_path = std::filesystem::current_path();
-	//	bool is_recursive = false;
-
-	//	// Performance settings
-	//	size_t desired_worker_count = std::thread::hardware_concurrency() - 1; // by default, leave a core for the calling thread to perform its progress report routine
-	//};
 
 	// The crunch class only serves the purpose of managing the access specifiers of functions,
 	// which is why all its methods are statics. This is used to determine what is exposed in the public API.
