@@ -26,15 +26,7 @@ namespace slippcrunch {
 	class crunch {
 	public:
 		static std::vector<R> crunch_directory(const crunch_params<R> params, const std::filesystem::path directory = std::filesystem::current_path(), const bool is_recursive = false) {
-			std::vector<std::filesystem::directory_entry> file_entries;
-			for (auto& directory_entry : std::filesystem::recursive_directory_iterator(directory)) {
-				bool is_file = !directory_entry.is_directory() && (directory_entry.is_regular_file() || directory_entry.is_symlink());
-				bool is_slp_file = is_file && directory_entry.path().has_extension() && directory_entry.path().extension() == ".slp";
-				if (is_slp_file) {
-					file_entries.push_back(std::move(directory_entry));
-				}
-			}
-			return crunch_files(params, file_entries);
+			return is_recursive ? crunch_directory<std::filesystem::recursive_directory_iterator>(params, directory) : crunch_directory<std::filesystem::directory_iterator>(params, directory);
 		}
 
 		static std::vector<R> crunch_files(const crunch_params<R> params, const std::vector<std::filesystem::directory_entry>& files) {
@@ -100,6 +92,19 @@ namespace slippcrunch {
 		}
 
 	private:
+		template<typename D>
+		static std::vector<R> crunch_directory(const crunch_params<R> params, const std::filesystem::path directory = std::filesystem::current_path()) {
+			std::vector<std::filesystem::directory_entry> file_entries;
+			for (const auto& directory_entry : D(directory)) {
+				bool is_file = !directory_entry.is_directory() && (directory_entry.is_regular_file() || directory_entry.is_symlink());
+				bool is_slp_file = is_file && directory_entry.path().has_extension() && directory_entry.path().extension() == ".slp";
+				if (is_slp_file) {
+					file_entries.push_back(directory_entry);
+				}
+			}
+			return crunch_files(params, file_entries);
+		}
+
 		static std::vector<R> worker_func
 		(
 			R(*crunch_func)(std::unique_ptr<slip::Parser>),
