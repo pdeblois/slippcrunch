@@ -26,7 +26,7 @@ namespace slippcrunch {
 	//	// Callbacks
 	//	R(*crunch_func)(std::unique_ptr<slip::Parser> parser) = nullptr; // the per-file processing function (processes one replay/parser)
 	//	//void(*directory_traversal_done_func)(size_t total_file_count) = nullptr;
-	//	void(*progress_report_func)(const std::vector<size_t>& processed_file_counts, const std::vector<size_t>& file_queue_sizes) = nullptr;
+	//	void(*progress_report_func)(const std::vector<size_t>& worker_processed_file_counts, const std::vector<size_t>& file_queue_sizes) = nullptr;
 	//	//void(*crunch_done_func)(size_t total_files_parsed_count, std::chrono::steady_clock::time_point start_time, std::chrono::steady_clock::time_point end_time) = nullptr;
 
 	//	// Directory traversal settings
@@ -58,14 +58,14 @@ namespace slippcrunch {
 			const size_t worker_count = std::clamp<size_t>(params.desired_worker_count, 1, std::thread::hardware_concurrency());
 
 			// Setup the file queues for each worker
-			std::vector<std::queue<std::filesystem::directory_entry>> file_entry_queues(worker_count);
-			std::vector<std::atomic_size_t> processed_file_counts(worker_count);
+			std::vector<std::queue<std::filesystem::directory_entry>> worker_file_entry_queues(worker_count);
+			std::vector<std::atomic_size_t> worker_processed_file_counts(worker_count);
 			size_t total_file_count = 0;
-			for (auto& file_entry : files) {
+			for (const auto& file_entry : files) {
 				bool is_file = !file_entry.is_directory() && (file_entry.is_regular_file() || file_entry.is_symlink());
 				bool is_slp_file = is_file && file_entry.path().has_extension() && file_entry.path().extension() == ".slp";
 				if (is_slp_file) {
-					file_entry_queues[total_file_count % worker_count].push(std::move(file_entry));
+					worker_file_entry_queues[total_file_count % worker_count].push(file_entry);
 					total_file_count++;
 				}
 			}
@@ -77,8 +77,8 @@ namespace slippcrunch {
 					std::launch::async,
 					crunch<R>::worker_func,
 					params.crunch_func,
-					&(file_entry_queues[iWorker]),
-					&(processed_file_counts[iWorker])
+					&(worker_file_entry_queues[iWorker]),
+					&(worker_processed_file_counts[iWorker])
 				));
 			}
 
@@ -86,7 +86,7 @@ namespace slippcrunch {
 			if (params.progress_report_func != nullptr) {
 				while (!are_futures_ready(futures)) {
 					size_t total_processed_filed_count = 0;
-					for (const auto& worker_processed_file_count : processed_file_counts) {
+					for (const auto& worker_processed_file_count : worker_processed_file_counts) {
 						total_processed_filed_count += worker_processed_file_count.load();
 					}
 					params.progress_report_func(total_processed_filed_count, total_file_count);
