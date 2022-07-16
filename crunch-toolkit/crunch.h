@@ -77,7 +77,7 @@ namespace slippcrunch {
 			// Aggregate the results of each task into a single vector of results
 			// Each element of the returned results vector is the result of a call to crunch_func,
 			// i.e. one element of crunch_results = the returned value of crunch_func'ing one slip::Parser/.slp replay file
-			// The results are in order of how the files were iterated by the std::filesystem::recursive_directory_iterator
+			// We reorder the results so that they are in order of how the files were iterated by the directory iterator
 			std::vector<std::vector<R>> future_results;
 			for (auto& future : futures) {
 				future_results.push_back(std::move(future.get()));
