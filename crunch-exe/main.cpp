@@ -54,6 +54,10 @@ size_t do_nothing_with_parser(std::unique_ptr<slip::Parser> parser) {
 }
 
 void log_progress(size_t processed_file_count, size_t total_file_count) {
+	if (total_file_count == 0) {
+		return;
+	}
+
 	const static std::string loading_symbols[] = { "-", "\\", "|", "/" };
 	const uint8_t loading_symbols_length = 4;
 	static uint8_t iLoadingSymbol = 0;
