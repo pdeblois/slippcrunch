@@ -101,7 +101,7 @@ int main() {
 		}
 		std::cout << "Found " << combo_count << " combos" << std::endl;
 	}
-	catch (std::exception& error) {
+	catch (const std::exception& error) {
 		std::cout << error.what() << std::endl;
 	}
 	std::cin.get();
