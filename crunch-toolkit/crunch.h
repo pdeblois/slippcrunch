@@ -74,7 +74,7 @@ namespace slippcrunch {
 				future.wait();
 			}
 
-			// Aggregate the results of each task into a single vector of results
+			// Aggregate the results of each worker into a single vector of results
 			// Each element of the returned results vector is the result of a call to crunch_func,
 			// i.e. one element of crunch_results = the returned value of crunch_func'ing one slip::Parser/.slp replay file
 			// We reorder the results so that they are in order of how the files were iterated by the directory iterator
