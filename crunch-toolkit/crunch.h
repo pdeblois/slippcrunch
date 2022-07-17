@@ -46,15 +46,15 @@ namespace slippcrunch {
 			}
 
 			// Start the workers
-			std::vector<std::future<std::vector<R>>> futures;
+			std::vector<std::future<std::vector<R>>> futures(worker_count);
 			for (size_t iWorker = 0; iWorker < worker_count; ++iWorker) {
-				futures.push_back(std::async(
+				futures[iWorker] = std::async(
 					std::launch::async,
 					crunch<R>::worker_func,
 					params.crunch_func,
 					&(worker_file_entry_queues[iWorker]),
 					&(worker_processed_file_counts[iWorker])
-				));
+				);
 			}
 
 			// Log the workers' progress
@@ -78,15 +78,15 @@ namespace slippcrunch {
 			// Each element of the returned results vector is the result of a call to crunch_func,
 			// i.e. one element of crunch_results = the returned value of crunch_func'ing one slip::Parser/.slp replay file
 			// We reorder the results so that they are in order of how the files were iterated by the directory iterator
-			std::vector<std::vector<R>> future_results;
-			for (auto& future : futures) {
-				future_results.push_back(std::move(future.get()));
+			std::vector<std::vector<R>> future_results(worker_count);
+			for (size_t iWorker = 0; iWorker < worker_count; ++iWorker) {
+				future_results[iWorker] = std::move(futures[iWorker].get());
 			}
-			std::vector<R> crunch_results;
+			std::vector<R> crunch_results(total_file_count);
 			for (size_t iFileEntry = 0; iFileEntry < total_file_count; ++iFileEntry) {
 				size_t worker_index = iFileEntry % worker_count;
 				size_t worker_offset = iFileEntry / worker_count;
-				crunch_results.push_back(std::move(future_results[worker_index][worker_offset]));
+				crunch_results[iFileEntry] = std::move(future_results[worker_index][worker_offset]);
 			}
 			return crunch_results;
 		}
