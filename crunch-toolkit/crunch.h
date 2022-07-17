@@ -102,7 +102,7 @@ namespace slippcrunch {
 					file_entries.push_back(directory_entry);
 				}
 			}
-			return crunch_files(params, file_entries);
+			return crunch_files(params, std::move(file_entries));
 		}
 
 		static std::vector<R> worker_func
