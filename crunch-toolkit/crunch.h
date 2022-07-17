@@ -17,7 +17,7 @@ namespace slippcrunch {
 
 		// How many workers to start (i.e. threads). Will be clamped between [1,std::thread::hardware_concurrency()] (inclusive).
 		// By default, leaves one core free for the calling thread.
-		size_t desired_worker_count = std::thread::hardware_concurrency() - 1; // by default, leave a core for the calling thread to perform its progress report routine
+		size_t desired_worker_count = std::thread::hardware_concurrency() - 1;
 	};
 
 	// The crunch class only serves the purpose of managing the access specifiers of functions,
