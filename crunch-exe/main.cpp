@@ -89,7 +89,7 @@ int main() {
 		crunch_args.progress_report_func = log_progress;
 		
 		std::chrono::steady_clock::time_point crunch_start_time = std::chrono::steady_clock::now();
-		std::vector<std::vector<slippcrunch::Combo>> crunch_results = slippcrunch::crunch<std::vector<slippcrunch::Combo>>::crunch_directory(crunch_args, std::filesystem::current_path(), true);
+		std::vector<std::optional<std::vector<slippcrunch::Combo>>> crunch_results = slippcrunch::crunch<std::vector<slippcrunch::Combo>>::crunch_directory(crunch_args, std::filesystem::current_path(), true);
 		std::chrono::steady_clock::time_point crunch_end_time = std::chrono::steady_clock::now();
 		
 		auto crunch_duration = std::chrono::duration_cast<std::chrono::seconds>(crunch_end_time - crunch_start_time);
@@ -97,7 +97,7 @@ int main() {
 		
 		size_t combo_count = 0;
 		for (const auto& crunch_result : crunch_results) {
-			combo_count += crunch_result.size();
+			combo_count += crunch_result.has_value() ? crunch_result.value().size() : 0;
 		}
 		std::cout << "Found " << combo_count << " combos" << std::endl;
 	}

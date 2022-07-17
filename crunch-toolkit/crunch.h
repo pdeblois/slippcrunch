@@ -25,11 +25,11 @@ namespace slippcrunch {
 	template<typename R>
 	class crunch {
 	public:
-		static std::vector<R> crunch_directory(const crunch_params<R> params, const std::filesystem::path directory = std::filesystem::current_path(), const bool is_recursive = false) {
+		static std::vector<std::optional<R>> crunch_directory(const crunch_params<R> params, const std::filesystem::path directory = std::filesystem::current_path(), const bool is_recursive = false) {
 			return is_recursive ? crunch_directory<std::filesystem::recursive_directory_iterator>(params, directory) : crunch_directory<std::filesystem::directory_iterator>(params, directory);
 		}
 
-		static std::vector<R> crunch_files(const crunch_params<R> params, const std::vector<std::filesystem::directory_entry>& files) {
+		static std::vector<std::optional<R>> crunch_files(const crunch_params<R> params, const std::vector<std::filesystem::directory_entry>& files) {
 			const size_t worker_count = std::clamp<size_t>(params.desired_worker_count, 1, std::thread::hardware_concurrency());
 
 			// Setup the file queues for each worker
@@ -46,7 +46,7 @@ namespace slippcrunch {
 			}
 
 			// Start the workers
-			std::vector<std::future<std::vector<R>>> futures(worker_count);
+			std::vector<std::future<std::vector<std::optional<R>>>> futures(worker_count);
 			for (size_t iWorker = 0; iWorker < worker_count; ++iWorker) {
 				futures[iWorker] = std::async(
 					std::launch::async,
@@ -78,11 +78,11 @@ namespace slippcrunch {
 			// Each element of the returned results vector is the result of a call to crunch_func,
 			// i.e. one element of crunch_results = the returned value of crunch_func'ing one slip::Parser/.slp replay file
 			// We reorder the results so that they are in order of how the files were iterated by the directory iterator
-			std::vector<std::vector<R>> future_results(worker_count);
+			std::vector<std::vector<std::optional<R>>> future_results(worker_count);
 			for (size_t iWorker = 0; iWorker < worker_count; ++iWorker) {
 				future_results[iWorker] = std::move(futures[iWorker].get());
 			}
-			std::vector<R> crunch_results(total_file_count);
+			std::vector<std::optional<R>> crunch_results(total_file_count);
 			for (size_t iFileEntry = 0; iFileEntry < total_file_count; ++iFileEntry) {
 				size_t worker_index = iFileEntry % worker_count;
 				size_t worker_offset = iFileEntry / worker_count;
@@ -93,7 +93,7 @@ namespace slippcrunch {
 
 	private:
 		template<typename D>
-		static std::vector<R> crunch_directory(const crunch_params<R> params, const std::filesystem::path directory = std::filesystem::current_path()) {
+		static std::vector<std::optional<R>> crunch_directory(const crunch_params<R> params, const std::filesystem::path directory = std::filesystem::current_path()) {
 			std::vector<std::filesystem::directory_entry> file_entries;
 			for (const auto& directory_entry : D(directory)) {
 				bool is_file = !directory_entry.is_directory() && (directory_entry.is_regular_file() || directory_entry.is_symlink());
@@ -105,28 +105,30 @@ namespace slippcrunch {
 			return crunch_files(params, std::move(file_entries));
 		}
 
-		static std::vector<R> worker_func
+		static std::vector<std::optional<R>> worker_func
 		(
 			R(*crunch_func)(std::unique_ptr<slip::Parser>),
 			std::queue<std::filesystem::directory_entry>* file_entry_queue,
 			std::atomic_size_t* processed_file_count
 		)
 		{
-			std::vector<R> results;
+			std::vector<std::optional<R>> results;
 			while (!file_entry_queue->empty()) {
 				std::unique_ptr<slip::Parser> parser = std::make_unique<slip::Parser>(0);
-				bool was_parsing_successful = parser->load(file_entry_queue->front().path().string().c_str());
+				bool was_parsing_successful = parser->load(file_entry_queue->front().path().string().c_str()) && parser->replay()->errors == 0;
 				if (was_parsing_successful) {
-					R crunch_func_result = crunch_func(std::move(parser));
-					results.push_back(std::move(crunch_func_result));
-					processed_file_count->store(processed_file_count->load() + 1);
-					file_entry_queue->pop();
+					results.push_back(std::move(crunch_func(std::move(parser))));
 				}
+				else {
+					results.push_back(std::nullopt);
+				}
+				processed_file_count->store(processed_file_count->load() + 1);
+				file_entry_queue->pop();
 			}
 			return results;
 		}
 
-		static bool are_futures_ready(const std::vector<std::future<std::vector<R>>>& futures) {
+		static bool are_futures_ready(const std::vector<std::future<std::vector<std::optional<R>>>>& futures) {
 			for (const auto& future : futures) {
 				auto future_status = future.wait_for(std::chrono::milliseconds::zero());
 				if (future_status != std::future_status::ready) {
