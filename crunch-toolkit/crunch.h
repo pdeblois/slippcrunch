@@ -112,15 +112,16 @@ namespace slippcrunch {
 			std::atomic_size_t* processed_file_count
 		)
 		{
-			std::vector<std::optional<R>> results;
+			std::vector<std::optional<R>> results(file_entry_queue->size());
+			size_t iResults = 0;
 			while (!file_entry_queue->empty()) {
 				std::unique_ptr<slip::Parser> parser = std::make_unique<slip::Parser>(0);
 				bool was_parsing_successful = parser->load(file_entry_queue->front().path().string().c_str()) && parser->replay()->errors == 0;
 				if (was_parsing_successful) {
-					results.push_back(std::move(crunch_func(std::move(parser))));
+					results[iResults++] = std::move(crunch_func(std::move(parser)));
 				}
 				else {
-					results.push_back(std::nullopt);
+					results[iResults++] = std::nullopt;
 				}
 				processed_file_count->store(processed_file_count->load() + 1);
 				file_entry_queue->pop();
