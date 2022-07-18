@@ -73,10 +73,12 @@ void log_progress(size_t processed_file_count, size_t total_file_count) {
 	std::string arrow_indicator(hollow_indicator_count > 0 ? 1 : 0, '>');
 	std::string hollow_indicators(hollow_indicator_count > 0 ? hollow_indicator_count - 1 : 0, ' ');
 	
-	std::cout << loading_symbols[++iLoadingSymbol % loading_symbols_length] << " Crunching...";
-	std::cout << " [" << filled_indicators << arrow_indicator << hollow_indicators << "] ";
-	std::cout << std::floor(progress * 100) << "% (" << processed_file_count << "/" << total_file_count << " files)";
-	std::cout << std::endl;
+	std::stringstream progress_report;
+	progress_report << loading_symbols[++iLoadingSymbol % loading_symbols_length] << " Crunching...";
+	progress_report << " [" << filled_indicators << arrow_indicator << hollow_indicators << "] ";
+	progress_report << std::floor(progress * 100) << "% (" << processed_file_count << "/" << total_file_count << " files)";
+	progress_report << std::endl;
+	std::cout << progress_report.str();
 }
 
 int main() {
