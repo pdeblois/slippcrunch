@@ -45,15 +45,76 @@ namespace slippcrunch {
 		return ratio;
 	}
 
-	int Combo::MovieStartFrame() const { 
-		return punish.start_frame - COMBO_INTRO_FRAMES; 
-	}
-
-	int Combo::MovieEndFrame() const {
-		return punish.end_frame + COMBO_OUTRO_FRAMES; 
-	}
-
 	int Combo::Score() const {
 		return 0;
+	}
+
+	int32_t Combo::ClampToGameFrames(int32_t target_frame) const {
+		return std::clamp<int>(target_frame, first_game_frame, last_game_frame);
+	}
+
+	int32_t Combo::MovieStartFrame() const {
+		int32_t target_frame = (punish.start_frame - LOAD_FRAME) - COMBO_INTRO_FRAMES;
+		return ClampToGameFrames(target_frame);
+	}
+
+	int32_t Combo::MovieEndFrame() const {
+		int32_t target_frame = (punish.end_frame - LOAD_FRAME) + COMBO_OUTRO_FRAMES;
+		return ClampToGameFrames(target_frame);
+	}
+
+	std::string Combo::ToJson(size_t base_indentation_count, size_t indentation_size) const {
+		std::stringstream json_output;
+		
+		std::string single_indent(indentation_size, ' ');
+		std::stringstream base_indent;
+		for (size_t iBaseIndent = 0; iBaseIndent < base_indentation_count; ++iBaseIndent) {
+			base_indent << single_indent;
+		}
+
+		json_output << base_indent.str() << "{" << std::endl;
+		json_output << base_indent.str() << single_indent << "\"path\": \"" << format_file_path(absolute_replay_file_path) << "\"," << std::endl;
+		json_output << base_indent.str() << single_indent << "\"gameStartAt\": \"" << format_timestamp(timestamp) << "\"," << std::endl;
+		json_output << base_indent.str() << single_indent << "\"startFrame\": " << MovieStartFrame() << "," << std::endl;
+		json_output << base_indent.str() << single_indent << "\"endFrame\": " << MovieEndFrame() << std::endl;
+		json_output << base_indent.str() << "}";
+
+		return json_output.str();
+	}
+
+	// Converts C:\Users\Xyz\... into C:\\Users\\Xyz\\...
+	std::string Combo::format_file_path(const std::string& original_file_path) {
+		std::string formatted_file_path = original_file_path;
+		size_t start_pos = formatted_file_path.find("\\");
+		while (start_pos != formatted_file_path.npos) {
+			formatted_file_path.replace(start_pos, 1, "@");
+			start_pos = formatted_file_path.find("\\");
+		}
+		start_pos = formatted_file_path.find("@");
+		while (start_pos != formatted_file_path.npos) {
+			formatted_file_path.replace(start_pos, 1, "\\\\");
+			start_pos = formatted_file_path.find("@");
+		}
+		return formatted_file_path;
+	}
+
+	// Converts YYYY-MM-DDTHH:MM:SSZ to MM/DD/YY HH:MM (am/pm)
+	std::string Combo::format_timestamp(const std::string& original_timestamp) {
+		std::stringstream formatted_timestamp;
+
+		// Converts YYYY-MM-DD to MM/DD/YY (+space)
+		formatted_timestamp << original_timestamp.substr(5, 2) << "/"; // month
+		formatted_timestamp << original_timestamp.substr(8, 2) << "/"; // day
+		formatted_timestamp << original_timestamp.substr(2, 2) << " "; // year
+
+		// Converts HH:MM:SS to HH:MM (am/pm)
+		std::string minutes = original_timestamp.substr(14, 2);
+		int hour = std::stoi(original_timestamp.substr(11, 2));
+		bool is_pm = hour >= 12;
+		if (is_pm && hour > 12) hour -= 12;
+		if (hour == 0) hour = 12;
+		formatted_timestamp << hour << ":" << minutes << " " << (is_pm ? "pm" : "am");
+
+		return formatted_timestamp.str();
 	}
 }

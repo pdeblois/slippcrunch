@@ -30,7 +30,10 @@ std::vector<slippcrunch::Combo> find_combos_from_parser(std::unique_ptr<slip::Pa
 		if (!curr_combo.attacks.empty() && curr_attack.punish_id != curr_combo.attacks.back().punish_id) {
 			curr_combo.punish = player_analysis.punishes[curr_combo.attacks.back().punish_id];
 			if (is_combo_valid(curr_combo)) {
-				curr_combo.absolute_file_path = parser->replay()->original_file;
+				curr_combo.absolute_replay_file_path = parser->replay()->original_file;
+				curr_combo.timestamp = parser->replay()->start_time;
+				curr_combo.first_game_frame = parser->replay()->first_frame;
+				curr_combo.last_game_frame = parser->replay()->last_frame;
 				combos.push_back(std::move(curr_combo));
 			}
 			curr_combo = {};
@@ -80,10 +83,49 @@ void log_progress(size_t processed_file_count, size_t total_file_count) {
 	std::cout << progress_report.str();
 }
 
+std::vector<slippcrunch::Combo> filter_combo_crunch_results(const std::vector<std::optional<std::vector<slippcrunch::Combo>>>& file_results) {
+	std::vector<slippcrunch::Combo> filtered_combos;
+	for (const auto& file_result : file_results) {
+		if (file_result.has_value()) {
+			filtered_combos.insert(filtered_combos.end(), file_result.value().begin(), file_result.value().end());
+		}
+	}
+	return filtered_combos;
+}
+
+void output_json_combo_queue(const std::vector<slippcrunch::Combo>& combos, std::string json_filename) {
+	constexpr size_t indentation_size = 4;
+	static const std::string single_indent(indentation_size, ' ');
+
+	std::stringstream json_output;
+	json_output << "{" << std::endl;
+	json_output << single_indent << "\"mode\": \"queue\"," << std::endl;
+	json_output << single_indent << "\"replay\": \"\"," << std::endl;
+	json_output << single_indent << "\"isRealTimeMode\": false," << std::endl;
+	json_output << single_indent << "\"outputOverlayFiles\": true," << std::endl;
+	json_output << single_indent << "\"queue\": [" << std::endl;
+
+	for (size_t iCombo = 0; iCombo < combos.size(); ++iCombo) {
+		json_output << combos[iCombo].ToJson(2, indentation_size);
+		if (iCombo != combos.size() - 1) {
+			json_output << ",";
+		}
+		json_output << std::endl;
+	}
+
+	json_output << single_indent << "]" << std::endl;
+	json_output << "}" << std::endl;
+
+	std::ofstream json_file(json_filename, std::ios_base::out);
+	json_file << json_output.str();
+	json_file.close();
+}
+
 int main() {
 	try {
-		std::cout << "Press enter to start the crunch...";
-		std::cin.get();
+		std::string json_filename;
+		std::cout << "Enter the combo queue filename : ";
+		std::cin >> json_filename;
 		
 		slippcrunch::crunch_params<std::vector<slippcrunch::Combo>> crunch_args;
 		crunch_args.crunch_func = find_combos_from_parser;
@@ -101,6 +143,7 @@ int main() {
 			combo_count += crunch_result.has_value() ? crunch_result.value().size() : 0;
 		}
 		std::cout << "Found " << combo_count << " combos" << std::endl;
+		output_json_combo_queue(filter_combo_crunch_results(crunch_results), json_filename);
 	}
 	catch (const std::exception& error) {
 		std::cout << error.what() << std::endl;
