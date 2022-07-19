@@ -8,6 +8,7 @@ namespace slippcrunch {
 	struct Combo {
 		std::vector<slip::Attack> attacks;
 		slip::Punish punish;
+		std::string absolute_file_path;
 
 		bool DidKill() const;
 		size_t TotalMoveCount() const;
