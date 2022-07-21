@@ -30,10 +30,12 @@ std::vector<slippcrunch::Combo> find_combos_from_parser(std::unique_ptr<slip::Pa
 		if (!curr_combo.attacks.empty() && curr_attack.punish_id != curr_combo.attacks.back().punish_id) {
 			curr_combo.punish = player_analysis.punishes[curr_combo.attacks.back().punish_id];
 			if (is_combo_valid(curr_combo)) {
-				curr_combo.absolute_replay_file_path = parser->replay()->original_file;
-				curr_combo.timestamp = parser->replay()->start_time;
-				curr_combo.first_game_frame = parser->replay()->first_frame;
-				curr_combo.last_game_frame = parser->replay()->last_frame;
+				slippcrunch::Combo::ReplayData replay_data;
+				replay_data.absolute_replay_file_path = parser->replay()->original_file;
+				replay_data.timestamp = parser->replay()->start_time;
+				replay_data.first_game_frame = parser->replay()->first_frame;
+				replay_data.last_game_frame = parser->replay()->last_frame;
+				curr_combo.replay_data = replay_data;
 				combos.push_back(std::move(curr_combo));
 			}
 			curr_combo = {};

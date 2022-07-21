@@ -50,16 +50,16 @@ namespace slippcrunch {
 	}
 
 	int32_t Combo::ClampToGameFrames(int32_t target_frame) const {
-		return std::clamp<int>(target_frame, first_game_frame, last_game_frame);
+		return std::clamp<int>(target_frame, replay_data.first_game_frame, replay_data.last_game_frame);
 	}
 
 	int32_t Combo::MovieStartFrame() const {
-		int32_t target_frame = (punish.start_frame - LOAD_FRAME) - COMBO_INTRO_FRAMES;
+		int32_t target_frame = (punish.start_frame - LOAD_FRAME) - intro_frames;
 		return ClampToGameFrames(target_frame);
 	}
 
 	int32_t Combo::MovieEndFrame() const {
-		int32_t target_frame = (punish.end_frame - LOAD_FRAME) + COMBO_OUTRO_FRAMES;
+		int32_t target_frame = (punish.end_frame - LOAD_FRAME) + outro_frames;
 		return ClampToGameFrames(target_frame);
 	}
 
@@ -73,8 +73,8 @@ namespace slippcrunch {
 		}
 
 		json_output << base_indent.str() << "{" << std::endl;
-		json_output << base_indent.str() << single_indent << "\"path\": \"" << format_file_path(absolute_replay_file_path) << "\"," << std::endl;
-		json_output << base_indent.str() << single_indent << "\"gameStartAt\": \"" << format_timestamp(timestamp) << "\"," << std::endl;
+		json_output << base_indent.str() << single_indent << "\"path\": \"" << FormatFilePath(replay_data.absolute_replay_file_path) << "\"," << std::endl;
+		json_output << base_indent.str() << single_indent << "\"gameStartAt\": \"" << FormatTimestamp(replay_data.timestamp) << "\"," << std::endl;
 		json_output << base_indent.str() << single_indent << "\"startFrame\": " << MovieStartFrame() << "," << std::endl;
 		json_output << base_indent.str() << single_indent << "\"endFrame\": " << MovieEndFrame() << std::endl;
 		json_output << base_indent.str() << "}";
@@ -83,7 +83,7 @@ namespace slippcrunch {
 	}
 
 	// Converts C:\Users\Xyz\... into C:\\Users\\Xyz\\...
-	std::string Combo::format_file_path(const std::string& original_file_path) {
+	std::string Combo::FormatFilePath(const std::string& original_file_path) {
 		std::string formatted_file_path = original_file_path;
 		size_t start_pos = formatted_file_path.find("\\");
 		while (start_pos != formatted_file_path.npos) {
@@ -99,7 +99,7 @@ namespace slippcrunch {
 	}
 
 	// Converts YYYY-MM-DDTHH:MM:SSZ to MM/DD/YY HH:MM (am/pm)
-	std::string Combo::format_timestamp(const std::string& original_timestamp) {
+	std::string Combo::FormatTimestamp(const std::string& original_timestamp) {
 		std::stringstream formatted_timestamp;
 
 		// Converts YYYY-MM-DD to MM/DD/YY (+space)
