@@ -10,7 +10,56 @@
 #include "combo.h"
 
 bool is_combo_valid(const slippcrunch::Combo& combo) {
-	return combo.DidKill() && combo.TotalMoveCount() >= 7 && combo.TotalDamage() >= 60 && combo.HighestSingleAttackDamageRatio() <= 0.25f;
+	// c_xyz = condition_xyz
+	bool c_kill = combo.DidKill();
+	bool c_total_move_count = combo.TotalMoveCount() >= 7;
+	bool c_total_damage = combo.TotalDamage() >= 0;
+	bool c_damage_ratio = (static_cast<float>(combo.HighestSingleAttackDamage()) / static_cast<float>(combo.TotalDamage())) <= 0.35f;
+	return c_kill && c_total_move_count && c_total_damage && c_damage_ratio;
+}
+
+std::vector<slippcrunch::Combo> ffp_combos(std::unique_ptr<slip::Parser> parser) {
+	std::unique_ptr<slip::Analysis> analysis_ptr(parser->analyze());
+	const slip::Analysis& analysis = *analysis_ptr;
+
+	std::vector<slippcrunch::Combo> combos;
+
+	int port_to_use = analysis.ap[0].tag_code == "YOYO#278" ? 0 : 1;
+	const slip::AnalysisPlayer& player_analysis = analysis.ap[port_to_use];
+
+	slippcrunch::Combo curr_combo;
+	for (size_t iAttack = 0; player_analysis.attacks[iAttack].frame > 0; ++iAttack) {
+		const slip::Attack& curr_attack = player_analysis.attacks[iAttack];
+		const slip::Punish& curr_punish = player_analysis.punishes[curr_attack.punish_id];
+
+		if (curr_attack.damage <= 0) {
+			continue;
+		}
+
+		if (!curr_combo.attacks.empty()) {
+			bool is_different_punish = curr_attack.punish_id != curr_combo.attacks.back().punish_id;
+			//bool is_too_late = (curr_attack.frame - curr_combo.attacks.back().frame) > 45;
+			if (is_different_punish || false) {
+				curr_combo.punish = player_analysis.punishes[curr_combo.attacks.back().punish_id];
+				if (is_combo_valid(curr_combo)) {
+					slippcrunch::Combo::ReplayData replay_data;
+					replay_data.absolute_replay_file_path = parser->replay()->original_file;
+					replay_data.timestamp = parser->replay()->start_time;
+					replay_data.first_game_frame = parser->replay()->first_frame;
+					replay_data.last_game_frame = parser->replay()->last_frame;
+					curr_combo.replay_data = replay_data;
+					combos.push_back(std::move(curr_combo));
+				}
+				curr_combo = {};
+			}
+		}
+
+		if (curr_attack.damage > 0) {
+			curr_combo.attacks.push_back(curr_attack);
+		}
+	}
+
+	return combos;
 }
 
 std::vector<slippcrunch::Combo> find_combos_from_parser(std::unique_ptr<slip::Parser> parser) {
@@ -130,7 +179,7 @@ int main() {
 		std::cin >> json_filename;
 		
 		slippcrunch::crunch_params<std::vector<slippcrunch::Combo>> crunch_args;
-		crunch_args.crunch_func = find_combos_from_parser;
+		crunch_args.crunch_func = ffp_combos;
 		crunch_args.progress_report_func = log_progress;
 		
 		std::chrono::steady_clock::time_point crunch_start_time = std::chrono::steady_clock::now();

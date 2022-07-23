@@ -5,7 +5,7 @@
 
 namespace slippcrunch {
 	bool Combo::DidKill() const { 
-		return Dir::NEUT < punish.kill_dir && punish.kill_dir < Dir::__LAST; 
+		return Dir::NEUT < punish.kill_dir && punish.kill_dir < Dir::__LAST;
 	}
 
 	size_t Combo::TotalMoveCount() const {
@@ -54,12 +54,12 @@ namespace slippcrunch {
 	}
 
 	int32_t Combo::MovieStartFrame() const {
-		int32_t target_frame = (punish.start_frame - LOAD_FRAME) - intro_frames;
+		int32_t target_frame = (attacks.front().frame + LOAD_FRAME) - intro_frames;
 		return ClampToGameFrames(target_frame);
 	}
 
 	int32_t Combo::MovieEndFrame() const {
-		int32_t target_frame = (punish.end_frame - LOAD_FRAME) + outro_frames;
+		int32_t target_frame = (punish.end_frame + LOAD_FRAME) + outro_frames;
 		return ClampToGameFrames(target_frame);
 	}
 
