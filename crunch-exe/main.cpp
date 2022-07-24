@@ -12,8 +12,8 @@
 bool is_combo_valid(const slippcrunch::Combo& combo) {
 	// c_xyz = condition_xyz
 	bool c_kill = combo.DidKill();
-	bool c_total_move_count = combo.TotalMoveCount() >= 7;
-	bool c_total_damage = combo.TotalDamage() >= 0;
+	bool c_total_move_count = combo.TotalMoveCount() >= 5;
+	bool c_total_damage = combo.TotalDamage() >= 20;
 	bool c_damage_ratio = (static_cast<float>(combo.HighestSingleAttackDamage()) / static_cast<float>(combo.TotalDamage())) <= 0.35f;
 	return c_kill && c_total_move_count && c_total_damage && c_damage_ratio;
 }
@@ -172,6 +172,32 @@ void output_json_combo_queue(const std::vector<slippcrunch::Combo>& combos, std:
 	json_file.close();
 }
 
+bool combo_sort_desc(const slippcrunch::Combo& left, const slippcrunch::Combo& right) {
+	return left.GetScore() > right.GetScore();
+	
+	if (left.TotalMoveCount() < right.TotalMoveCount()) {
+		return true;
+	}
+
+	if (left.UniqueMoveCount() < right.UniqueMoveCount()) {
+		return true;
+	}
+	/*
+	if ((left.MoveDelayAverage() - right.MoveDelayAverage()) > 5) {
+		return true;
+	}
+
+	if ((left.MoveDelayStdDev() - right.MoveDelayStdDev()) > 3) {
+		return true;
+	}
+	*/
+	if (left.TotalDamage() < right.TotalDamage()) {
+		return true;
+	}
+
+	return false;
+}
+
 int main() {
 	try {
 		std::string json_filename;
@@ -194,7 +220,13 @@ int main() {
 			combo_count += crunch_result.has_value() ? crunch_result.value().size() : 0;
 		}
 		std::cout << "Found " << combo_count << " combos" << std::endl;
-		output_json_combo_queue(filter_combo_crunch_results(crunch_results), json_filename);
+		
+		auto filtered_crunch_results = filter_combo_crunch_results(crunch_results);
+		for (auto& combo : filtered_crunch_results) {
+			combo.ComputeScore();
+		}
+		std::sort(filtered_crunch_results.begin(), filtered_crunch_results.end(), combo_sort_desc);
+		output_json_combo_queue(filtered_crunch_results, json_filename);
 	}
 	catch (const std::exception& error) {
 		std::cout << error.what() << std::endl;

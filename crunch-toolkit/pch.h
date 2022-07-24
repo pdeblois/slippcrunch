@@ -10,6 +10,8 @@
 // add headers that you want to pre-compile here
 
 // general external stuff
+#include <cmath>
+#include <limits>
 #include <vector>
 #include <list>
 #include <memory>

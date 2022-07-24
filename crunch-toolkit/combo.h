@@ -5,15 +5,16 @@
 namespace slippcrunch {
 	constexpr size_t DEFAULT_COMBO_INTRO_FRAMES = 60;
 	constexpr size_t DEFAULT_COMBO_OUTRO_FRAMES = 60;
-	struct Combo {
+	class Combo {
+	public:
 		// The C++ data that later gets converted to JSON
 		// The strings in here do not correspond to the outputted JSON,
 		// they are just copies of the parsed slippc replay data
 		struct ReplayData {
 			std::string absolute_replay_file_path;
 			std::string timestamp;
-			int32_t first_game_frame;
-			int32_t last_game_frame;
+			int32_t first_game_frame = 0;
+			int32_t last_game_frame = 0;
 		};
 
 		// The actual core combo data
@@ -31,7 +32,11 @@ namespace slippcrunch {
 		uint16_t TotalDamage() const;
 		uint16_t HighestSingleAttackDamage() const;
 		float HighestSingleAttackDamageRatio() const;
-		int Score() const;
+		float MoveDelayAverage() const;
+		float MoveDelayStdDev() const;
+		float LongestMoveDelay() const;
+		float GetScore() const;
+		float ComputeScore();
 		
 		int32_t MovieStartFrame() const;
 		int32_t MovieEndFrame() const;
@@ -40,5 +45,9 @@ namespace slippcrunch {
 
 		static std::string FormatFilePath(const std::string& original_file_path);
 		static std::string FormatTimestamp(const std::string& original_timestamp);
+
+	private:
+		bool _is_score_cache_valid = false;
+		float _score_cache = 0;
 	};
 }

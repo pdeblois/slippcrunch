@@ -45,8 +45,59 @@ namespace slippcrunch {
 		return ratio;
 	}
 
-	int Combo::Score() const {
-		return 0;
+	float Combo::MoveDelayAverage() const {
+		float total_move_delay = 0;
+		for (size_t iAttack = 1; iAttack < attacks.size(); ++iAttack) {
+			float move_delay = attacks[iAttack].frame - attacks[iAttack - 1].frame;
+			total_move_delay += move_delay;
+		}
+		return total_move_delay / TotalMoveCount();
+	}
+
+	float Combo::MoveDelayStdDev() const {
+		float move_delay_average = MoveDelayAverage();
+		float distances_accumulator = 0;
+		for (size_t iAttack = 1; iAttack < attacks.size(); ++iAttack) {
+			float move_delay = attacks[iAttack].frame - attacks[iAttack - 1].frame;
+			distances_accumulator += std::pow(move_delay - move_delay_average, 2);
+		}
+		return std::sqrt(distances_accumulator / TotalMoveCount());
+	}
+
+	float Combo::LongestMoveDelay() const {
+		float longest_move_delay = 0;
+		for (size_t iAttack = 1; iAttack < attacks.size(); ++iAttack) {
+			float move_delay = attacks[iAttack].frame - attacks[iAttack - 1].frame;
+			longest_move_delay = std::max<float>(move_delay, longest_move_delay);
+		}
+		return longest_move_delay;
+	}
+
+	float Combo::GetScore() const {
+		if (_is_score_cache_valid) {
+			return _score_cache;
+		}
+
+		float score = 0;
+
+		score += TotalMoveCount() * 1e8;
+		score += UniqueMoveCount() * 1e7;
+		score -= MoveDelayAverage() * 1e4;
+		score -= MoveDelayStdDev() * 1e3;
+		score += TotalDamage();
+
+		return score;
+	}
+
+	float Combo::ComputeScore() {
+		if (_is_score_cache_valid) {
+			return _score_cache;
+		}
+
+		_score_cache = GetScore();
+		_is_score_cache_valid = true;
+
+		return _score_cache;
 	}
 
 	int32_t Combo::ClampToGameFrames(int32_t target_frame) const {
